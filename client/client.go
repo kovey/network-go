@@ -6,6 +6,8 @@ import (
 	"network/connection"
 	"sync"
 	"time"
+
+	"github.com/kovey/logger-go/logger"
 )
 
 type IClient interface {
@@ -21,18 +23,19 @@ type IHandler interface {
 }
 
 type Client struct {
-	cli      IClient
-	handler  IHandler
-	wait     sync.WaitGroup
-	config   connection.PacketConfig
-	shutdown chan bool
-	ticker   *time.Ticker
-	host     string
-	port     int
+	cli        IClient
+	handler    IHandler
+	wait       sync.WaitGroup
+	config     connection.PacketConfig
+	shutdown   chan bool
+	ticker     *time.Ticker
+	host       string
+	port       int
+	isShutdown bool
 }
 
 func NewClient(config connection.PacketConfig) *Client {
-	return &Client{wait: sync.WaitGroup{}, config: config, shutdown: make(chan bool, 1), ticker: time.NewTicker(10 * time.Second)}
+	return &Client{wait: sync.WaitGroup{}, config: config, shutdown: make(chan bool, 1), ticker: time.NewTicker(10 * time.Second), isShutdown: false}
 }
 
 func (c *Client) SetService(cli IClient) {
@@ -51,6 +54,9 @@ func (c *Client) Dial(host string, port int) error {
 
 func (c *Client) handlerPacket(pack connection.IPacket) {
 	defer c.wait.Done()
+	defer func() {
+		logger.Panic(recover())
+	}()
 	c.handler.Receive(pack, c)
 }
 
@@ -58,8 +64,12 @@ func (c *Client) Try() error {
 	return c.Dial(c.host, c.port)
 }
 
+// TODO 处理关闭
 func (c *Client) rloop() {
 	defer c.wait.Done()
+	defer func() {
+		logger.Panic(recover())
+	}()
 	for {
 		pbuf, err := c.cli.Connection().Read(c.config.HeaderLength, c.config.BodyLenLen, c.config.BodyLenOffset)
 		if err == io.EOF {
@@ -70,7 +80,12 @@ func (c *Client) rloop() {
 		}
 
 		if err != nil {
-			continue
+			c.shutdown <- true
+			break
+		}
+
+		if c == nil || c.handler == nil {
+			break
 		}
 
 		pack, e := c.handler.Packet(pbuf)
@@ -92,7 +107,7 @@ event_loop:
 	for {
 		select {
 		case <-c.shutdown:
-			c.Shutdown()
+			c.Close()
 			break event_loop
 		case pack, ok := <-c.cli.Connection().RQueue():
 			if !ok {
@@ -114,14 +129,26 @@ event_loop:
 
 func (c *Client) handlerIdle() {
 	defer c.wait.Done()
+	defer func() {
+		logger.Panic(recover())
+	}()
 	c.handler.Idle(c)
 }
 
-func (c *Client) Shutdown() {
+func (c *Client) Close() {
 	c.handler = nil
 	c.cli.Connection().Close()
 	c.ticker.Stop()
+	close(c.shutdown)
 	c.wait.Wait()
+}
+
+func (c *Client) Shutdown() {
+	if c.isShutdown {
+		return
+	}
+	c.shutdown <- true
+	c.isShutdown = true
 }
 
 func (c *Client) Send(pack connection.IPacket) error {

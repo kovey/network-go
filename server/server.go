@@ -55,6 +55,9 @@ func (s *Server) listenAndServ() error {
 
 func (s *Server) connect(conn connection.IConnection) {
 	defer s.wait.Done()
+	defer func() {
+		logger.Panic(recover())
+	}()
 	s.handler.Connect(conn)
 }
 
@@ -136,6 +139,9 @@ func (s *Server) Shutdown() {
 
 func (s *Server) rloop(conn connection.IConnection) {
 	defer s.wait.Done()
+	defer func() {
+		logger.Panic(recover())
+	}()
 	defer s.Close(conn.FD())
 	for {
 		pbuf, err := conn.Read(s.config.PConfig.HeaderLength, s.config.PConfig.BodyLenLen, s.config.PConfig.BodyLenOffset)
@@ -153,6 +159,10 @@ func (s *Server) rloop(conn connection.IConnection) {
 			continue
 		}
 
+		if conn.Closed() {
+			break
+		}
+
 		select {
 		case conn.RQueue() <- pack:
 		}
@@ -161,6 +171,9 @@ func (s *Server) rloop(conn connection.IConnection) {
 
 func (s *Server) handlerConn(conn connection.IConnection) {
 	defer s.wait.Done()
+	defer func() {
+		logger.Panic(recover())
+	}()
 	s.wait.Add(1)
 	go s.rloop(conn)
 
@@ -191,6 +204,9 @@ conn_loop:
 
 func (s *Server) handlerPacket(pack connection.IPacket, conn connection.IConnection) {
 	defer s.wait.Done()
+	defer func() {
+		logger.Panic(recover())
+	}()
 	context, err := getContext()
 	if err != nil {
 		logger.Error("get context error: %s", err)

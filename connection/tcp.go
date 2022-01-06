@@ -65,6 +65,10 @@ func NewTcp(fd int, conn net.Conn) *Tcp {
 }
 
 func (t *Tcp) Close() error {
+	if t.isClosed {
+		return nil
+	}
+
 	close(t.rQueue)
 	close(t.wQueue)
 	t.isClosed = true
