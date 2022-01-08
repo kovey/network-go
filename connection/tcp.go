@@ -85,7 +85,7 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 			need := hLen - l
 			tmp := make([]byte, need)
 			n, err := t.conn.Read(tmp)
-			if err == io.EOF {
+			if err != nil {
 				return nil, err
 			}
 

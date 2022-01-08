@@ -4,10 +4,7 @@ import (
 	"fmt"
 	"io"
 	"network/connection"
-	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 
 	"github.com/kovey/logger-go/logger"
 )
@@ -32,11 +29,10 @@ type Server struct {
 	handler IHandler
 	wait    sync.WaitGroup
 	config  Config
-	sigChan chan os.Signal
 }
 
 func NewServer(config Config) *Server {
-	return &Server{conns: sync.Map{}, wait: sync.WaitGroup{}, config: config, sigChan: make(chan os.Signal, 1)}
+	return &Server{conns: sync.Map{}, wait: sync.WaitGroup{}, config: config}
 }
 
 func (s *Server) SetService(service IService) *Server {
@@ -150,7 +146,7 @@ func (s *Server) rloop(conn connection.IConnection) {
 		}
 
 		if err != nil {
-			continue
+			break
 		}
 
 		pack, e := s.handler.Packet(pbuf)
@@ -229,10 +225,5 @@ func (s *Server) Run() {
 		panic(err)
 	}
 
-	signal.Notify(s.sigChan, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-s.sigChan
-		s.Shutdown()
-	}()
 	s.loop()
 }

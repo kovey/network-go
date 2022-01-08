@@ -108,6 +108,7 @@ event_loop:
 		select {
 		case <-c.shutdown:
 			c.Close()
+			c.isShutdown = true
 			break event_loop
 		case pack, ok := <-c.cli.Connection().RQueue():
 			if !ok {
