@@ -7,10 +7,11 @@ import (
 
 	"github.com/kovey/network-go/connection"
 
+	"github.com/gobwas/ws"
 	"github.com/kovey/logger-go/logger"
 )
 
-type TcpService struct {
+type WebSocketService struct {
 	connMax   int
 	connCount int
 	curFD     int
@@ -18,11 +19,11 @@ type TcpService struct {
 	locker    sync.Mutex
 }
 
-func NewTcpService(connMax int) *TcpService {
-	return &TcpService{connMax, 0, 0, nil, sync.Mutex{}}
+func NewWebSocketService(connMax int) *WebSocketService {
+	return &WebSocketService{connMax, 0, 0, nil, sync.Mutex{}}
 }
 
-func (t *TcpService) Listen(host string, port int) error {
+func (t *WebSocketService) Listen(host string, port int) error {
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		return err
@@ -34,7 +35,7 @@ func (t *TcpService) Listen(host string, port int) error {
 	return nil
 }
 
-func (t *TcpService) Accept() (connection.IConnection, error) {
+func (t *WebSocketService) Accept() (connection.IConnection, error) {
 	if t.connCount > t.connMax {
 		return nil, fmt.Errorf("connection is reach max[%d]", t.connMax)
 	}
@@ -44,17 +45,22 @@ func (t *TcpService) Accept() (connection.IConnection, error) {
 		return nil, err
 	}
 
+	_, err = ws.Upgrade(conn)
+	if err != nil {
+		return nil, err
+	}
+
 	t.connCount++
 	t.curFD++
-	return connection.NewTcp(t.curFD, conn), nil
+	return connection.NewWebSocket(t.curFD, conn), nil
 }
 
-func (t *TcpService) Close() {
+func (t *WebSocketService) Close() {
 	t.locker.Lock()
 	t.connCount--
 	t.locker.Unlock()
 }
 
-func (t *TcpService) Shutdown() {
+func (t *WebSocketService) Shutdown() {
 	t.listener.Close()
 }

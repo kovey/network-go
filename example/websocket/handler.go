@@ -1,4 +1,4 @@
-package example
+package websocket
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ func (h *Handler) Close(conn connection.IConnection) error {
 
 func (h *Handler) Packet(buf []byte) (connection.IPacket, error) {
 	p := &Packet{}
-	err := p.Unserialize(buf[4:])
+	err := p.Unserialize(buf)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ type CHandler struct {
 
 func (h *CHandler) Packet(buf []byte) (connection.IPacket, error) {
 	p := &Packet{}
-	err := p.Unserialize(buf[4:])
+	err := p.Unserialize(buf)
 	if err != nil {
 		return nil, err
 	}

@@ -3,7 +3,7 @@ package server
 import (
 	"fmt"
 	"io"
-	"network/connection"
+	"github.com/kovey/network-go/connection"
 	"sync"
 
 	"github.com/kovey/logger-go/logger"
@@ -24,15 +24,16 @@ type IHandler interface {
 }
 
 type Server struct {
-	conns   sync.Map
-	service IService
-	handler IHandler
-	wait    sync.WaitGroup
-	config  Config
+	conns      sync.Map
+	service    IService
+	handler    IHandler
+	wait       sync.WaitGroup
+	config     Config
+	isMaintain bool
 }
 
 func NewServer(config Config) *Server {
-	return &Server{conns: sync.Map{}, wait: sync.WaitGroup{}, config: config}
+	return &Server{conns: sync.Map{}, wait: sync.WaitGroup{}, config: config, isMaintain: false}
 }
 
 func (s *Server) SetService(service IService) *Server {
@@ -63,6 +64,13 @@ func (s *Server) loop() {
 		if err != nil {
 			break
 		}
+
+		if s.isMaintain {
+			conn.Close()
+			logger.Debug("server is into maintain")
+			continue
+		}
+
 		s.conns.Store(conn.FD(), conn)
 		s.wait.Add(1)
 		go s.connect(conn)
@@ -149,6 +157,11 @@ func (s *Server) rloop(conn connection.IConnection) {
 			break
 		}
 
+		if s.isMaintain {
+			logger.Debug("server is into maintain")
+			continue
+		}
+
 		pack, e := s.handler.Packet(pbuf)
 		if e != nil || pack == nil {
 			logger.Error("get packet error or packet is nil: %s, %+v", e, pack)
@@ -226,4 +239,8 @@ func (s *Server) Run() {
 	}
 
 	s.loop()
+}
+
+func (s *Server) Maintain() {
+	s.isMaintain = true
 }

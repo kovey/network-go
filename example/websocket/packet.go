@@ -1,9 +1,7 @@
-package example
+package websocket
 
 import (
 	"encoding/json"
-
-	"github.com/kovey/network-go/connection"
 )
 
 type Packet struct {
@@ -18,7 +16,7 @@ func (p *Packet) Serialize() []byte {
 		return nil
 	}
 
-	return append(connection.Int32ToBytes(int32(len(info))), info...)
+	return info
 }
 
 func (p *Packet) Unserialize(buf []byte) error {

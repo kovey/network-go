@@ -3,7 +3,8 @@ package client
 import (
 	"fmt"
 	"net"
-	"network/connection"
+
+	"github.com/kovey/network-go/connection"
 )
 
 type Tcp struct {

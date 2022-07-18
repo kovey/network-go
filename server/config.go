@@ -3,7 +3,8 @@ package server
 import (
 	"encoding/json"
 	"io/ioutil"
-	"network/connection"
+
+	"github.com/kovey/network-go/connection"
 
 	"gopkg.in/yaml.v2"
 )

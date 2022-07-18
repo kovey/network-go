@@ -3,9 +3,10 @@ package client
 import (
 	"fmt"
 	"io"
-	"network/connection"
 	"sync"
 	"time"
+
+	"github.com/kovey/network-go/connection"
 
 	"github.com/kovey/logger-go/logger"
 )
