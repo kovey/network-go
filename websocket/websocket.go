@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"fmt"
+
 	"github.com/kovey/network-go/connection"
 
 	"golang.org/x/net/websocket"
@@ -11,7 +12,7 @@ type WebSocket struct {
 	fd       int
 	conn     *websocket.Conn
 	rQueue   chan connection.IPacket
-	wQueue   chan connection.IPacket
+	wQueue   chan []byte
 	packet   func(buf []byte) (connection.IPacket, error)
 	buf      []byte
 	isClosed bool
@@ -24,7 +25,7 @@ func Dial(protocol, host string, port int, path string) (*websocket.Conn, error)
 func NewWebSocket(fd int, conn *websocket.Conn) *WebSocket {
 	return &WebSocket{
 		fd, conn, make(chan connection.IPacket, connection.CHANNEL_PACKET_MAX),
-		make(chan connection.IPacket, connection.CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false,
+		make(chan []byte, connection.CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false,
 	}
 }
 
@@ -49,7 +50,7 @@ func (t *WebSocket) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 	return hBuf[:n], nil
 }
 
-func (t *WebSocket) WQueue() chan connection.IPacket {
+func (t *WebSocket) WQueue() chan []byte {
 	return t.wQueue
 }
 
@@ -61,13 +62,27 @@ func (t *WebSocket) FD() int {
 	return t.fd
 }
 
-func (t *WebSocket) Write(pack connection.IPacket) (int, error) {
+func (t *WebSocket) Write(pack []byte) (int, error) {
 	if t.isClosed {
 		return 0, fmt.Errorf("connection[%d] is closed", t.fd)
 	}
-	return t.conn.Write(pack.Serialize())
+	return t.conn.Write(pack)
 }
 
 func (t *WebSocket) Closed() bool {
 	return t.isClosed
+}
+
+func (t *WebSocket) Send(pack connection.IPacket) error {
+	if t.isClosed {
+		return fmt.Errorf("connection[%d] is closed", t.fd)
+	}
+
+	buf := pack.Serialize()
+	if buf == nil {
+		return fmt.Errorf("pack is empty")
+	}
+
+	t.wQueue <- buf
+	return nil
 }

@@ -19,7 +19,7 @@ type Tcp struct {
 	fd       int
 	conn     net.Conn
 	rQueue   chan IPacket
-	wQueue   chan IPacket
+	wQueue   chan []byte
 	packet   func(buf []byte) (IPacket, error)
 	buf      []byte
 	isClosed bool
@@ -61,7 +61,7 @@ func BytesToInt64(buf []byte) int64 {
 }
 
 func NewTcp(fd int, conn net.Conn) *Tcp {
-	return &Tcp{fd, conn, make(chan IPacket, CHANNEL_PACKET_MAX), make(chan IPacket, CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false}
+	return &Tcp{fd, conn, make(chan IPacket, CHANNEL_PACKET_MAX), make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false}
 }
 
 func (t *Tcp) Close() error {
@@ -124,7 +124,7 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 	}
 }
 
-func (t *Tcp) WQueue() chan IPacket {
+func (t *Tcp) WQueue() chan []byte {
 	return t.wQueue
 }
 
@@ -136,11 +136,25 @@ func (t *Tcp) FD() int {
 	return t.fd
 }
 
-func (t *Tcp) Write(pack IPacket) (int, error) {
+func (t *Tcp) Write(pack []byte) (int, error) {
 	if t.isClosed {
 		return 0, fmt.Errorf("connection[%d] is closed", t.fd)
 	}
-	return t.conn.Write(pack.Serialize())
+	return t.conn.Write(pack)
+}
+
+func (t *Tcp) Send(pack IPacket) error {
+	if t.isClosed {
+		return fmt.Errorf("connection[%d] is closed", t.fd)
+	}
+
+	buf := pack.Serialize()
+	if buf == nil {
+		return fmt.Errorf("pack is nil")
+	}
+
+	t.wQueue <- buf
+	return nil
 }
 
 func (t *Tcp) Closed() bool {

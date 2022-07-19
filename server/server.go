@@ -3,8 +3,9 @@ package server
 import (
 	"fmt"
 	"io"
-	"github.com/kovey/network-go/connection"
 	"sync"
+
+	"github.com/kovey/network-go/connection"
 
 	"github.com/kovey/logger-go/logger"
 )
@@ -119,8 +120,13 @@ func (s *Server) Send(pack connection.IPacket, fd int) error {
 		return fmt.Errorf("connection[%d] is closed", fd)
 	}
 
+	buf := pack.Serialize()
+	if buf == nil {
+		return fmt.Errorf("pack is nil")
+	}
+
 	select {
-	case c.WQueue() <- pack:
+	case c.WQueue() <- buf:
 		return nil
 	}
 }

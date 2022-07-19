@@ -161,8 +161,13 @@ func (c *Client) Send(pack connection.IPacket) error {
 		return fmt.Errorf("pack is empty")
 	}
 
+	buf := pack.Serialize()
+	if buf == nil {
+		return fmt.Errorf("pack is empty")
+	}
+
 	select {
-	case c.cli.Connection().WQueue() <- pack:
+	case c.cli.Connection().WQueue() <- buf:
 		return nil
 	}
 }

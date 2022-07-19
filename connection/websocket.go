@@ -12,14 +12,14 @@ type WebSocket struct {
 	fd       int
 	conn     net.Conn
 	rQueue   chan IPacket
-	wQueue   chan IPacket
+	wQueue   chan []byte
 	packet   func(buf []byte) (IPacket, error)
 	buf      []byte
 	isClosed bool
 }
 
 func NewWebSocket(fd int, conn net.Conn) *WebSocket {
-	return &WebSocket{fd, conn, make(chan IPacket, CHANNEL_PACKET_MAX), make(chan IPacket, CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false}
+	return &WebSocket{fd, conn, make(chan IPacket, CHANNEL_PACKET_MAX), make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false}
 }
 
 func (t *WebSocket) Close() error {
@@ -59,7 +59,7 @@ func (t *WebSocket) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 	return hBuf, nil
 }
 
-func (t *WebSocket) WQueue() chan IPacket {
+func (t *WebSocket) WQueue() chan []byte {
 	return t.wQueue
 }
 
@@ -71,11 +71,25 @@ func (t *WebSocket) FD() int {
 	return t.fd
 }
 
-func (t *WebSocket) Write(pack IPacket) (int, error) {
+func (t *WebSocket) Write(pack []byte) (int, error) {
 	if t.isClosed {
 		return 0, fmt.Errorf("connection[%d] is closed", t.fd)
 	}
-	return t.conn.Write(pack.Serialize())
+	return t.conn.Write(pack)
+}
+
+func (t *WebSocket) Send(pack IPacket) error {
+	if t.isClosed {
+		return fmt.Errorf("connection[%d] is closed", t.fd)
+	}
+
+	buf := pack.Serialize()
+	if buf == nil {
+		return fmt.Errorf("pack is empty")
+	}
+
+	t.wQueue <- buf
+	return nil
 }
 
 func (t *WebSocket) Closed() bool {

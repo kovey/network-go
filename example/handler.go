@@ -20,7 +20,7 @@ func (h *Handler) Connect(conn connection.IConnection) error {
 func (h *Handler) Receive(context *server.Context) error {
 	fmt.Printf("%+v\n", context.Pack())
 	fmt.Printf("connection[%d]", context.Connection().FD())
-	context.Connection().Write(context.Pack())
+	context.Connection().Send(context.Pack())
 	return nil
 }
 
