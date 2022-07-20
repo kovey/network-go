@@ -88,6 +88,10 @@ func (t *WebSocket) Send(pack IPacket) error {
 		return fmt.Errorf("pack is empty")
 	}
 
+	return t.SendBytes(buf)
+}
+
+func (t *WebSocket) SendBytes(buf []byte) error {
 	t.wQueue <- buf
 	return nil
 }

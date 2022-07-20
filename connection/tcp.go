@@ -153,6 +153,10 @@ func (t *Tcp) Send(pack IPacket) error {
 		return fmt.Errorf("pack is nil")
 	}
 
+	return t.SendBytes(buf)
+}
+
+func (t *Tcp) SendBytes(buf []byte) error {
 	t.wQueue <- buf
 	return nil
 }
