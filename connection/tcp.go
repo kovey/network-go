@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"unsafe"
 )
 
 const (
 	CHANNEL_PACKET_MAX = 1024
 )
 
-var nativeEndian binary.ByteOrder
+var nativeEndian binary.ByteOrder = binary.BigEndian
 
 type Tcp struct {
 	fd       int
@@ -25,12 +24,14 @@ type Tcp struct {
 	isClosed bool
 }
 
-func init() {
-	i := uint16(1)
-	if *(*byte)(unsafe.Pointer(&i)) == 0 {
+func Init(endian string) {
+	switch endian {
+	case "BigEndian":
 		nativeEndian = binary.BigEndian
-	} else {
+	case "LittleEndian":
 		nativeEndian = binary.LittleEndian
+	default:
+		nativeEndian = binary.BigEndian
 	}
 }
 

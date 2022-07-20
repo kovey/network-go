@@ -6,9 +6,10 @@ type IPacket interface {
 }
 
 type PacketConfig struct {
-	HeaderLength  int `json:"header_length"`
-	BodyLenOffset int `json:"body_length_offset"`
-	BodyLenLen    int `json:"body_length_len"`
+	HeaderLength  int    `json:"header_length" yaml:"header_length"`
+	BodyLenOffset int    `json:"body_length_offset" yaml:"body_length_offset"`
+	BodyLenLen    int    `json:"body_length_len" yaml:"body_length_len"`
+	Endian        string `json:"endian" yaml:"endian"`
 }
 
 type Default struct {

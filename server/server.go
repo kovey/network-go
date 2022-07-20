@@ -34,6 +34,7 @@ type Server struct {
 }
 
 func NewServer(config Config) *Server {
+	connection.Init(config.PConfig.Endian)
 	return &Server{conns: sync.Map{}, wait: sync.WaitGroup{}, config: config, isMaintain: false}
 }
 
