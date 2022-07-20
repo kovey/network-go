@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io"
 	"net"
 )
 
@@ -113,7 +112,7 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 
 		buf := make([]byte, bLength)
 		n, err := t.conn.Read(buf)
-		if err == io.EOF {
+		if err != nil {
 			return nil, err
 		}
 

@@ -66,7 +66,6 @@ func (c *Client) Try() error {
 	return c.Dial(c.host, c.port)
 }
 
-// TODO 处理关闭
 func (c *Client) rloop() {
 	defer c.wait.Done()
 	defer func() {
@@ -79,6 +78,8 @@ func (c *Client) rloop() {
 				c.shutdown <- true
 				break
 			}
+
+			continue
 		}
 
 		if err != nil {
