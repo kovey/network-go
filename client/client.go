@@ -21,6 +21,7 @@ type IHandler interface {
 	Receive(connection.IPacket, *Client) error
 	Idle(*Client) error
 	Try(*Client) bool
+	Shutdown()
 }
 
 type Client struct {
@@ -104,22 +105,25 @@ func (c *Client) Loop() {
 	c.wait.Add(1)
 	go c.rloop()
 
-event_loop:
 	for {
 		select {
 		case <-c.shutdown:
 			c.Close()
 			c.isShutdown = true
-			break event_loop
+			return
 		case pack, ok := <-c.cli.Connection().RQueue():
 			if !ok {
-				break event_loop
+				c.Close()
+				c.isShutdown = true
+				return
 			}
 			c.wait.Add(1)
 			go c.handlerPacket(pack)
 		case pack, ok := <-c.cli.Connection().WQueue():
 			if !ok {
-				break event_loop
+				c.Close()
+				c.isShutdown = true
+				return
 			}
 			c.cli.Connection().Write(pack)
 		case <-c.ticker.C:
@@ -138,6 +142,7 @@ func (c *Client) handlerIdle() {
 }
 
 func (c *Client) Close() {
+	c.handler.Shutdown()
 	c.handler = nil
 	c.cli.Connection().Close()
 	c.ticker.Stop()

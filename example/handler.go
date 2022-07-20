@@ -68,3 +68,7 @@ func (h *CHandler) Idle(cli *client.Client) error {
 func (h *CHandler) Try(cli *client.Client) bool {
 	return false
 }
+
+func (h *CHandler) Shutdown() {
+	fmt.Println("client Shutdown")
+}
