@@ -103,7 +103,6 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 		bodyLen := hBuf[bLenOffset : bLenOffset+bLen]
 		bLength := int(BytesToInt32(bodyLen))
 		logger.Debug("length: %d", bLength)
-		bLength = 33
 		if bLen > 4 {
 			bLength = int(BytesToInt64(bodyLen))
 		}
