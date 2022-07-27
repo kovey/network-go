@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+
+	"github.com/kovey/logger-go/logger"
 )
 
 const (
@@ -89,6 +91,7 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 				return nil, err
 			}
 
+			logger.Debug("tmp: %+v", tmp)
 			t.buf = append(t.buf, tmp...)
 			if n != need {
 				continue
@@ -99,6 +102,8 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 
 		bodyLen := hBuf[bLenOffset : bLenOffset+bLen]
 		bLength := int(BytesToInt32(bodyLen))
+		logger.Debug("length: %d", bLength)
+		bLength = 33
 		if bLen > 4 {
 			bLength = int(BytesToInt64(bodyLen))
 		}
@@ -112,6 +117,7 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 
 		buf := make([]byte, bLength)
 		n, err := t.conn.Read(buf)
+		logger.Debug("fianl buf: %+v", buf)
 		if err != nil {
 			return nil, err
 		}
@@ -144,10 +150,6 @@ func (t *Tcp) Write(pack []byte) (int, error) {
 }
 
 func (t *Tcp) Send(pack IPacket) error {
-	if t.isClosed {
-		return fmt.Errorf("connection[%d] is closed", t.fd)
-	}
-
 	buf := pack.Serialize()
 	if buf == nil {
 		return fmt.Errorf("pack is nil")
@@ -157,6 +159,10 @@ func (t *Tcp) Send(pack IPacket) error {
 }
 
 func (t *Tcp) SendBytes(buf []byte) error {
+	if t.isClosed {
+		return fmt.Errorf("connection[%d] is closed", t.fd)
+	}
+
 	t.wQueue <- buf
 	return nil
 }

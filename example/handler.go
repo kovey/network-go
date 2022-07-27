@@ -30,6 +30,7 @@ func (h *Handler) Close(conn connection.IConnection) error {
 }
 
 func (h *Handler) Packet(buf []byte) (connection.IPacket, error) {
+	fmt.Printf("all buf: %+v\n", buf)
 	p := &Packet{}
 	err := p.Unserialize(buf[4:])
 	if err != nil {

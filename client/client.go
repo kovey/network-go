@@ -160,9 +160,6 @@ func (c *Client) Shutdown() {
 }
 
 func (c *Client) Send(pack connection.IPacket) error {
-	if c.cli.Connection().Closed() {
-		return fmt.Errorf("connection[%d] is closed", c.cli.Connection().FD())
-	}
 	if pack == nil {
 		return fmt.Errorf("pack is empty")
 	}
@@ -170,6 +167,14 @@ func (c *Client) Send(pack connection.IPacket) error {
 	buf := pack.Serialize()
 	if buf == nil {
 		return fmt.Errorf("pack is empty")
+	}
+
+	return c.SendBytes(buf)
+}
+
+func (c *Client) SendBytes(buf []byte) error {
+	if c.cli.Connection().Closed() {
+		return fmt.Errorf("connection[%d] is closed", c.cli.Connection().FD())
 	}
 
 	select {

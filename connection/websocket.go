@@ -79,10 +79,6 @@ func (t *WebSocket) Write(pack []byte) (int, error) {
 }
 
 func (t *WebSocket) Send(pack IPacket) error {
-	if t.isClosed {
-		return fmt.Errorf("connection[%d] is closed", t.fd)
-	}
-
 	buf := pack.Serialize()
 	if buf == nil {
 		return fmt.Errorf("pack is empty")
@@ -92,6 +88,10 @@ func (t *WebSocket) Send(pack IPacket) error {
 }
 
 func (t *WebSocket) SendBytes(buf []byte) error {
+	if t.isClosed {
+		return fmt.Errorf("connection[%d] is closed", t.fd)
+	}
+
 	t.wQueue <- buf
 	return nil
 }
