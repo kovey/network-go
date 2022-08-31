@@ -31,6 +31,7 @@ type Server struct {
 	wait       sync.WaitGroup
 	config     Config
 	isMaintain bool
+	OnSuccess  func(*Server)
 }
 
 func NewServer(config Config) *Server {
@@ -243,6 +244,10 @@ func (s *Server) Run() {
 	err := s.listenAndServ()
 	if err != nil {
 		panic(err)
+	}
+
+	if s.OnSuccess != nil {
+		s.OnSuccess(s)
 	}
 
 	s.loop()
