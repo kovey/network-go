@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
 
 	"github.com/kovey/logger-go/logger"
@@ -11,6 +12,7 @@ import (
 
 const (
 	CHANNEL_PACKET_MAX = 1024
+	Packet_Max_Len     = 2097152
 )
 
 var nativeEndian binary.ByteOrder = binary.BigEndian
@@ -63,7 +65,7 @@ func BytesToInt64(buf []byte) int64 {
 }
 
 func NewTcp(fd int, conn net.Conn) *Tcp {
-	return &Tcp{fd, conn, make(chan IPacket, CHANNEL_PACKET_MAX), make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false}
+	return &Tcp{fd, conn, make(chan IPacket, CHANNEL_PACKET_MAX), make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, Packet_Max_Len), false}
 }
 
 func (t *Tcp) Close() error {
@@ -123,6 +125,10 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 
 		if n == 0 {
 			continue
+		}
+
+		if l+n > Packet_Max_Len {
+			return nil, io.EOF
 		}
 
 		t.buf = append(t.buf, buf...)
