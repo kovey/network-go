@@ -109,7 +109,7 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 			bLength = int(BytesToInt64(bodyLen))
 		}
 
-		if bLength > Packet_Max_Len-hLen {
+		if bLength < 0 || bLength > Packet_Max_Len-hLen {
 			return nil, io.EOF
 		}
 
