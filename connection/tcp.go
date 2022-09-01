@@ -104,13 +104,13 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 
 		bodyLen := hBuf[bLenOffset : bLenOffset+bLen]
 		bLength := int(BytesToInt32(bodyLen))
-		if bLength > Packet_Max_Len-hLen {
-			return nil, io.EOF
-		}
-
 		logger.Debug("length: %d", bLength)
 		if bLen > 4 {
 			bLength = int(BytesToInt64(bodyLen))
+		}
+
+		if bLength > Packet_Max_Len-hLen {
+			return nil, io.EOF
 		}
 
 		if l >= (bLength + hLen) {
