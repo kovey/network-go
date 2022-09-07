@@ -93,13 +93,18 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 				return nil, err
 			}
 
+			if n == 0 {
+				continue
+			}
+
 			logger.Debug("tmp: %+v", tmp)
-			t.buf = append(t.buf, tmp...)
+			t.buf = append(t.buf, tmp[:n]...)
 			if n != need {
 				continue
 			}
 
 			hBuf = t.buf[:hLen]
+			l += n
 		}
 
 		bodyLen := hBuf[bLenOffset : bLenOffset+bLen]
@@ -135,7 +140,7 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 			return nil, io.EOF
 		}
 
-		t.buf = append(t.buf, buf...)
+		t.buf = append(t.buf, buf[:n]...)
 	}
 }
 
