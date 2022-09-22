@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 
 	"github.com/gobwas/ws"
 )
@@ -98,4 +99,9 @@ func (t *WebSocket) SendBytes(buf []byte) error {
 
 func (t *WebSocket) Closed() bool {
 	return t.isClosed
+}
+
+func (t *WebSocket) RemoteIp() string {
+	addr := t.conn.RemoteAddr().String()
+	return strings.Split(addr, ":")[0]
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 
 	"github.com/kovey/logger-go/logger"
 )
@@ -183,4 +184,9 @@ func (t *Tcp) SendBytes(buf []byte) error {
 
 func (t *Tcp) Closed() bool {
 	return t.isClosed
+}
+
+func (t *Tcp) RemoteIp() string {
+	addr := t.conn.RemoteAddr().String()
+	return strings.Split(addr, ":")[0]
 }

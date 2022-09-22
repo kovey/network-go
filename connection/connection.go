@@ -10,4 +10,5 @@ type IConnection interface {
 	RQueue() chan IPacket
 	WQueue() chan []byte
 	Closed() bool
+	RemoteIp() string
 }

@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/kovey/network-go/connection"
 
@@ -89,4 +90,9 @@ func (t *WebSocket) SendBytes(buf []byte) error {
 
 	t.wQueue <- buf
 	return nil
+}
+
+func (t *WebSocket) RemoteIp() string {
+	addr := t.conn.RemoteAddr().String()
+	return strings.Split(addr, ":")[0]
 }
