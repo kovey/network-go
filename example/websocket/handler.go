@@ -46,6 +46,7 @@ func (h *CHandler) Packet(buf []byte) (connection.IPacket, error) {
 	p := &Packet{}
 	err := p.Unserialize(buf)
 	if err != nil {
+		fmt.Println("buf: ", buf, "err:", err)
 		return nil, err
 	}
 

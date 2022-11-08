@@ -44,6 +44,7 @@ func (t *WebSocket) Close() error {
 func (t *WebSocket) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 	var hBuf = make([]byte, 2097152)
 	n, err := t.conn.Read(hBuf)
+	fmt.Println("n: ", n, "buf:", hBuf[:n])
 	if err != nil {
 		return nil, err
 	}

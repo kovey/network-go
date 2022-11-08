@@ -78,7 +78,11 @@ func (t *WebSocket) Write(pack []byte) (int, error) {
 		return 0, fmt.Errorf("connection[%d] is closed", t.fd)
 	}
 	logger.Debug("send data to client: %+v", pack)
-	return t.conn.Write(pack)
+	if err := ws.WriteFrame(t.conn, ws.NewBinaryFrame(pack)); err != nil {
+		return 0, err
+	}
+
+	return len(pack), nil
 }
 
 func (t *WebSocket) Send(pack IPacket) error {
