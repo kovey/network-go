@@ -55,9 +55,6 @@ func (t *WebSocket) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 		ws.Cipher(hBuf, header.Mask, 0)
 	}
 
-	header.Masked = false
-	ws.WriteHeader(t.conn, header)
-
 	return hBuf, nil
 }
 
