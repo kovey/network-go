@@ -214,7 +214,8 @@ conn_loop:
 				continue conn_loop
 			}
 
-			conn.Write(pack)
+			n, err := conn.Write(pack)
+			logger.Debug("send data result, n[%d], err[%s]", n, err)
 		}
 	}
 }
