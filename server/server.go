@@ -65,6 +65,7 @@ func (s *Server) loop() {
 	for {
 		conn, err := s.service.Accept()
 		if err != nil {
+			logger.Error("accept error: %s", err)
 			break
 		}
 
@@ -80,6 +81,7 @@ func (s *Server) loop() {
 		s.wait.Add(1)
 		go s.handlerConn(conn)
 	}
+	logger.Warning("server main loop exit")
 }
 
 func (s *Server) Close(fd int) error {
@@ -162,6 +164,7 @@ func (s *Server) rloop(conn connection.IConnection) {
 		}
 
 		if err != nil {
+			logger.Error("read data error: %s", err)
 			break
 		}
 
