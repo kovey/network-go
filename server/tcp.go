@@ -16,10 +16,15 @@ type TcpService struct {
 	curFD     int
 	listener  net.Listener
 	locker    sync.Mutex
+	isClosed  bool
 }
 
 func NewTcpService(connMax int) *TcpService {
-	return &TcpService{connMax, 0, 0, nil, sync.Mutex{}}
+	return &TcpService{connMax, 0, 0, nil, sync.Mutex{}, false}
+}
+
+func (t *TcpService) IsClosed() bool {
+	return t.isClosed
 }
 
 func (t *TcpService) Listen(host string, port int) error {
@@ -56,5 +61,6 @@ func (t *TcpService) Close() {
 }
 
 func (t *TcpService) Shutdown() {
+	t.isClosed = true
 	t.listener.Close()
 }

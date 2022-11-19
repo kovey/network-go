@@ -17,10 +17,15 @@ type WebSocketService struct {
 	curFD     int
 	listener  net.Listener
 	locker    sync.Mutex
+	isClosed  bool
 }
 
 func NewWebSocketService(connMax int) *WebSocketService {
-	return &WebSocketService{connMax, 0, 0, nil, sync.Mutex{}}
+	return &WebSocketService{connMax, 0, 0, nil, sync.Mutex{}, false}
+}
+
+func (t *WebSocketService) IsClosed() bool {
+	return t.isClosed
 }
 
 func (t *WebSocketService) Listen(host string, port int) error {
@@ -62,5 +67,6 @@ func (t *WebSocketService) Close() {
 }
 
 func (t *WebSocketService) Shutdown() {
+	t.isClosed = true
 	t.listener.Close()
 }

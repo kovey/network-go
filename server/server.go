@@ -15,6 +15,7 @@ type IService interface {
 	Accept() (connection.IConnection, error)
 	Close()
 	Shutdown()
+	IsClosed() bool
 }
 
 type IHandler interface {
@@ -63,10 +64,15 @@ func (s *Server) connect(conn connection.IConnection) {
 
 func (s *Server) loop() {
 	for {
+		if s.service.IsClosed() {
+			logger.Warning("service closed")
+			break
+		}
+
 		conn, err := s.service.Accept()
 		if err != nil {
 			logger.Error("accept error: %s", err)
-			break
+			continue
 		}
 
 		if s.isMaintain {
