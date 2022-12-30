@@ -5,10 +5,10 @@ import (
 	"net"
 	"sync"
 
+	"github.com/kovey/debug-go/debug"
 	"github.com/kovey/network-go/connection"
 
 	"github.com/gobwas/ws"
-	"github.com/kovey/logger-go/logger"
 )
 
 type WebSocketService struct {
@@ -34,7 +34,7 @@ func (t *WebSocketService) Listen(host string, port int) error {
 		return err
 	}
 
-	logger.Debug("server listen on %s:%d", host, port)
+	debug.Info("server listen on %s:%d", host, port)
 
 	t.listener = listener
 	return nil

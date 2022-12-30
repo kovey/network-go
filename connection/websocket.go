@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/gobwas/ws"
-	"github.com/kovey/logger-go/logger"
 )
 
 type WebSocket struct {
@@ -74,7 +73,6 @@ func (t *WebSocket) Write(pack []byte) (int, error) {
 	if t.isClosed {
 		return 0, fmt.Errorf("connection[%d] is closed", t.fd)
 	}
-	logger.Debug("send data to client: %+v", pack)
 	if err := ws.WriteFrame(t.conn, ws.NewBinaryFrame(pack)); err != nil {
 		return 0, err
 	}

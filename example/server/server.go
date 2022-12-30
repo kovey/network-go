@@ -1,14 +1,12 @@
 package main
 
 import (
-	"github.com/kovey/logger-go/logger"
 	"github.com/kovey/network-go/connection"
 	"github.com/kovey/network-go/example"
 	"github.com/kovey/network-go/server"
 )
 
 func main() {
-	logger.SetLevel(logger.LOGGER_INFO)
 	config := server.Config{}
 	packet := connection.PacketConfig{}
 	packet.HeaderLength = 4

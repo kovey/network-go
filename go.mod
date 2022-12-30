@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/gobwas/ws v1.1.0
-	github.com/kovey/logger-go v0.0.4
+	github.com/kovey/debug-go v0.0.2
 	golang.org/x/net v0.0.0-20220630215102-69896b714898
 	gopkg.in/yaml.v2 v2.4.0
 )

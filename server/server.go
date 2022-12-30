@@ -5,9 +5,9 @@ import (
 	"io"
 	"sync"
 
+	"github.com/kovey/debug-go/debug"
+	"github.com/kovey/debug-go/run"
 	"github.com/kovey/network-go/connection"
-
-	"github.com/kovey/logger-go/logger"
 )
 
 type IService interface {
@@ -57,7 +57,7 @@ func (s *Server) listenAndServ() error {
 func (s *Server) connect(conn connection.IConnection) {
 	defer s.wait.Done()
 	defer func() {
-		logger.Panic(recover())
+		run.Panic(recover())
 	}()
 	s.handler.Connect(conn)
 }
@@ -65,19 +65,19 @@ func (s *Server) connect(conn connection.IConnection) {
 func (s *Server) loop() {
 	for {
 		if s.service.IsClosed() {
-			logger.Warning("service closed")
+			debug.Erro("service closed")
 			break
 		}
 
 		conn, err := s.service.Accept()
 		if err != nil {
-			logger.Error("accept error: %s", err)
+			debug.Erro("accept error: %s", err)
 			continue
 		}
 
 		if s.isMaintain {
 			conn.Close()
-			logger.Debug("server is into maintain")
+			debug.Erro("server is into maintain")
 			continue
 		}
 
@@ -87,7 +87,7 @@ func (s *Server) loop() {
 		s.wait.Add(1)
 		go s.handlerConn(conn)
 	}
-	logger.Warning("server main loop exit")
+	debug.Warn("server main loop exit")
 }
 
 func (s *Server) Close(fd int) error {
@@ -160,7 +160,7 @@ func (s *Server) Shutdown() {
 func (s *Server) rloop(conn connection.IConnection) {
 	defer s.wait.Done()
 	defer func() {
-		logger.Panic(recover())
+		run.Panic(recover())
 	}()
 	defer s.Close(conn.FD())
 	for {
@@ -170,18 +170,18 @@ func (s *Server) rloop(conn connection.IConnection) {
 		}
 
 		if err != nil {
-			logger.Error("read data error: %s", err)
+			debug.Erro("read data error: %s", err)
 			break
 		}
 
 		if s.isMaintain {
-			logger.Debug("server is into maintain")
+			debug.Erro("server is into maintain")
 			continue
 		}
 
 		pack, e := s.handler.Packet(pbuf)
 		if e != nil || pack == nil {
-			logger.Error("get packet error or packet is nil: %s, %+v", e, pack)
+			debug.Erro("get packet error or packet is nil: %s, %+v", e, pack)
 			continue
 		}
 
@@ -198,7 +198,7 @@ func (s *Server) rloop(conn connection.IConnection) {
 func (s *Server) handlerConn(conn connection.IConnection) {
 	defer s.wait.Done()
 	defer func() {
-		logger.Panic(recover())
+		run.Panic(recover())
 	}()
 	s.wait.Add(1)
 	go s.rloop(conn)
@@ -224,7 +224,7 @@ conn_loop:
 			}
 
 			n, err := conn.Write(pack)
-			logger.Debug("send data result, n[%d], err[%s]", n, err)
+			debug.Dbug("send data result, n[%d], err[%s]", n, err)
 		}
 	}
 }
@@ -232,11 +232,11 @@ conn_loop:
 func (s *Server) handlerPacket(pack connection.IPacket, conn connection.IConnection) {
 	defer s.wait.Done()
 	defer func() {
-		logger.Panic(recover())
+		run.Panic(recover())
 	}()
 	context, err := getContext()
 	if err != nil {
-		logger.Error("get context error: %s", err)
+		debug.Erro("get context error: %s", err)
 		return
 	}
 	defer putContext(context)
@@ -246,7 +246,7 @@ func (s *Server) handlerPacket(pack connection.IPacket, conn connection.IConnect
 
 	err = s.handler.Receive(context)
 	if err != nil {
-		logger.Error("handler receive error: %s", err)
+		debug.Erro("handler receive error: %s", err)
 	}
 }
 

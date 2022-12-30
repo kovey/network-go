@@ -5,9 +5,8 @@ import (
 	"net"
 	"sync"
 
+	"github.com/kovey/debug-go/debug"
 	"github.com/kovey/network-go/connection"
-
-	"github.com/kovey/logger-go/logger"
 )
 
 type TcpService struct {
@@ -33,7 +32,7 @@ func (t *TcpService) Listen(host string, port int) error {
 		return err
 	}
 
-	logger.Debug("server listen on %s:%d", host, port)
+	debug.Info("server listen on %s:%d", host, port)
 
 	t.listener = listener
 	return nil

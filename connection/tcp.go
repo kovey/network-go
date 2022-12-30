@@ -7,8 +7,6 @@ import (
 	"io"
 	"net"
 	"strings"
-
-	"github.com/kovey/logger-go/logger"
 )
 
 const (
@@ -98,7 +96,6 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 				continue
 			}
 
-			logger.Debug("tmp: %+v", tmp)
 			t.buf = append(t.buf, tmp[:n]...)
 			if n != need {
 				continue
@@ -110,7 +107,6 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 
 		bodyLen := hBuf[bLenOffset : bLenOffset+bLen]
 		bLength := int(BytesToInt32(bodyLen))
-		logger.Debug("length: %d", bLength)
 		if bLen > 4 {
 			bLength = int(BytesToInt64(bodyLen))
 		}
@@ -128,7 +124,6 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 
 		buf := make([]byte, bLength)
 		n, err := t.conn.Read(buf)
-		logger.Debug("fianl buf: %+v", buf)
 		if err != nil {
 			return nil, err
 		}

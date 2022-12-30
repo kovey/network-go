@@ -6,9 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kovey/debug-go/run"
 	"github.com/kovey/network-go/connection"
-
-	"github.com/kovey/logger-go/logger"
 )
 
 type IClient interface {
@@ -57,7 +56,7 @@ func (c *Client) Dial(host string, port int) error {
 func (c *Client) handlerPacket(pack connection.IPacket) {
 	defer c.wait.Done()
 	defer func() {
-		logger.Panic(recover())
+		run.Panic(recover())
 	}()
 	c.handler.Receive(pack, c)
 }
@@ -69,7 +68,7 @@ func (c *Client) Try() error {
 func (c *Client) rloop() {
 	defer c.wait.Done()
 	defer func() {
-		logger.Panic(recover())
+		run.Panic(recover())
 	}()
 	for {
 		pbuf, err := c.cli.Connection().Read(c.config.HeaderLength, c.config.BodyLenLen, c.config.BodyLenOffset)
@@ -137,7 +136,7 @@ func (c *Client) Loop() {
 func (c *Client) handlerIdle() {
 	defer c.wait.Done()
 	defer func() {
-		logger.Panic(recover())
+		run.Panic(recover())
 	}()
 	c.handler.Idle(c)
 }
