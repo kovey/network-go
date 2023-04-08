@@ -146,7 +146,6 @@ func (c *Client) Close() {
 	c.handler = nil
 	c.cli.Connection().Close()
 	c.ticker.Stop()
-	close(c.shutdown)
 	c.wait.Wait()
 }
 

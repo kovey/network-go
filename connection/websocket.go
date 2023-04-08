@@ -28,8 +28,6 @@ func (t *WebSocket) Close() error {
 		return nil
 	}
 
-	close(t.rQueue)
-	close(t.wQueue)
 	t.isClosed = true
 	return t.conn.Close()
 }
