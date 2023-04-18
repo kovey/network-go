@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
 	"github.com/kovey/debug-go/debug"
 	"github.com/kovey/debug-go/run"
@@ -202,10 +203,18 @@ func (s *Server) handlerConn(conn connection.IConnection) {
 	}()
 	s.wait.Add(1)
 	go s.rloop(conn)
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
 
 conn_loop:
 	for {
 		select {
+		case <-ticker.C:
+			if conn.Expired() {
+				debug.Warn("conn[%d] is expired", conn.FD())
+				conn.Close()
+				break conn_loop
+			}
 		case pack, ok := <-conn.RQueue():
 			if !ok {
 				break conn_loop

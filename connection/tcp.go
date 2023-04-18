@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"strings"
+	"time"
 )
 
 const (
@@ -24,6 +25,7 @@ type Tcp struct {
 	packet   func(buf []byte) (IPacket, error)
 	buf      []byte
 	isClosed bool
+	lastTime int64
 }
 
 func Init(endian string) {
@@ -64,7 +66,7 @@ func BytesToInt64(buf []byte) int64 {
 }
 
 func NewTcp(fd int, conn net.Conn) *Tcp {
-	return &Tcp{fd, conn, make(chan IPacket, CHANNEL_PACKET_MAX), make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, Packet_Max_Len), false}
+	return &Tcp{fd, conn, make(chan IPacket, CHANNEL_PACKET_MAX), make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, Packet_Max_Len), false, time.Now().Unix()}
 }
 
 func (t *Tcp) Close() error {
@@ -117,6 +119,7 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 			packet := make([]byte, bLength+hLen)
 			copy(packet, t.buf[:bLength+hLen])
 			t.buf = t.buf[bLength+hLen:]
+			t.lastTime = time.Now().Unix()
 			return packet, nil
 		}
 
@@ -182,4 +185,8 @@ func (t *Tcp) Closed() bool {
 func (t *Tcp) RemoteIp() string {
 	addr := t.conn.RemoteAddr().String()
 	return strings.Split(addr, ":")[0]
+}
+
+func (t *Tcp) Expired() bool {
+	return time.Now().Unix() > t.lastTime+60
 }

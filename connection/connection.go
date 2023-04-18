@@ -11,4 +11,5 @@ type IConnection interface {
 	WQueue() chan []byte
 	Closed() bool
 	RemoteIp() string
+	Expired() bool
 }

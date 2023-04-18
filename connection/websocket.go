@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/gobwas/ws"
 )
@@ -17,10 +18,11 @@ type WebSocket struct {
 	packet   func(buf []byte) (IPacket, error)
 	buf      []byte
 	isClosed bool
+	lastTime int64
 }
 
 func NewWebSocket(fd int, conn net.Conn) *WebSocket {
-	return &WebSocket{fd, conn, make(chan IPacket, CHANNEL_PACKET_MAX), make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false}
+	return &WebSocket{fd, conn, make(chan IPacket, CHANNEL_PACKET_MAX), make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false, time.Now().Unix()}
 }
 
 func (t *WebSocket) Close() error {
@@ -103,4 +105,8 @@ func (t *WebSocket) Closed() bool {
 func (t *WebSocket) RemoteIp() string {
 	addr := t.conn.RemoteAddr().String()
 	return strings.Split(addr, ":")[0]
+}
+
+func (t *WebSocket) Expired() bool {
+	return time.Now().Unix() > t.lastTime+60
 }
