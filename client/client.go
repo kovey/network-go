@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kovey/debug-go/debug"
 	"github.com/kovey/debug-go/run"
 	"github.com/kovey/network-go/connection"
 )
@@ -58,7 +59,9 @@ func (c *Client) handlerPacket(pack connection.IPacket) {
 	defer func() {
 		run.Panic(recover())
 	}()
-	c.handler.Receive(pack, c)
+	if err := c.handler.Receive(pack, c); err != nil {
+		debug.Erro("connection[%d] on receive failure, error: %s", c.cli.Connection().FD(), err)
+	}
 }
 
 func (c *Client) Try() error {
@@ -83,21 +86,26 @@ func (c *Client) rloop() {
 
 		if err != nil {
 			c.shutdown <- true
+			debug.Erro("connection[%d] read data failure, error: %s", c.cli.Connection().FD(), err)
 			break
 		}
 
 		if c == nil || c.handler == nil {
+			debug.Erro("client is nil or handler is nil")
 			break
 		}
 
 		pack, e := c.handler.Packet(pbuf)
-		if e != nil || pack == nil {
+		if e != nil {
+			debug.Erro("packet failure, error: %s", e)
+			continue
+		}
+		if pack == nil {
+			debug.Erro("pack is nil")
 			continue
 		}
 
-		select {
-		case c.cli.Connection().RQueue() <- pack:
-		}
+		c.cli.Connection().RQueue() <- pack
 	}
 }
 
@@ -125,7 +133,10 @@ func (c *Client) Loop() {
 				c.isShutdown = true
 				return
 			}
-			c.cli.Connection().Write(pack)
+			_, err := c.cli.Connection().Write(pack)
+			if err != nil {
+				debug.Erro("write pack to connection failure, error: %s", err)
+			}
 		case <-c.ticker.C:
 			c.wait.Add(1)
 			go c.handlerIdle()
@@ -138,7 +149,9 @@ func (c *Client) handlerIdle() {
 	defer func() {
 		run.Panic(recover())
 	}()
-	c.handler.Idle(c)
+	if err := c.handler.Idle(c); err != nil {
+		debug.Erro("Idle failure, error: %s", err)
+	}
 }
 
 func (c *Client) Close() {
@@ -175,8 +188,6 @@ func (c *Client) SendBytes(buf []byte) error {
 		return fmt.Errorf("connection[%d] is closed", c.cli.Connection().FD())
 	}
 
-	select {
-	case c.cli.Connection().WQueue() <- buf:
-		return nil
-	}
+	c.cli.Connection().WQueue() <- buf
+	return nil
 }

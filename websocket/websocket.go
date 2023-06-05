@@ -95,3 +95,7 @@ func (t *WebSocket) RemoteIp() string {
 	addr := t.conn.RemoteAddr().String()
 	return strings.Split(addr, ":")[0]
 }
+
+func (t *WebSocket) Expired() bool {
+	return false
+}

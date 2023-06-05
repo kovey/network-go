@@ -20,7 +20,9 @@ func main() {
 	pack.Name = "kovey"
 	pack.Age = 18
 
-	cli.Send(pack)
+	if err := cli.Send(pack); err != nil {
+		panic(err)
+	}
 
 	cli.Loop()
 }

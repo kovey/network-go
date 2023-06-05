@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kovey/debug-go/debug"
 	"github.com/kovey/network-go/client"
 	"github.com/kovey/network-go/connection"
 	"github.com/kovey/network-go/server"
@@ -20,8 +21,7 @@ func (h *Handler) Connect(conn connection.IConnection) error {
 func (h *Handler) Receive(context *server.Context) error {
 	fmt.Printf("%+v\n", context.Pack())
 	fmt.Printf("connection[%d]", context.Connection().FD())
-	context.Connection().Send(context.Pack())
-	return nil
+	return context.Connection().Send(context.Pack())
 }
 
 func (h *Handler) Close(conn connection.IConnection) error {
@@ -56,7 +56,9 @@ func (h *CHandler) Packet(buf []byte) (connection.IPacket, error) {
 func (h *CHandler) Receive(pack connection.IPacket, cli *client.Client) error {
 	fmt.Printf("%+v\n", pack)
 	time.AfterFunc(10*time.Second, func() {
-		cli.Send(pack)
+		if err := cli.Send(pack); err != nil {
+			debug.Erro("send failure, error: %s", err)
+		}
 	})
 
 	return nil

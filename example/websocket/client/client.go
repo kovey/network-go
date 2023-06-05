@@ -11,7 +11,7 @@ func main() {
 	cli := client.NewClient(connection.PacketConfig{HeaderLength: 4, BodyLenOffset: 0, BodyLenLen: 4})
 	cli.SetService(client.NewWebSocket())
 	cli.SetHandler(&websocket.CHandler{})
-	err := cli.Dial("127.0.0.1", 9911)
+	err := cli.Dial("47.108.158.214", 9900)
 	debug.Dbug("error: %s", err)
 	if err != nil {
 		panic(err)

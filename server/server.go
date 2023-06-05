@@ -60,7 +60,9 @@ func (s *Server) connect(conn connection.IConnection) {
 	defer func() {
 		run.Panic(recover())
 	}()
-	s.handler.Connect(conn)
+	if err := s.handler.Connect(conn); err != nil {
+		debug.Erro("connection[%d] on connect failure, error: %s", conn.FD(), err)
+	}
 }
 
 func (s *Server) loop() {
@@ -136,10 +138,8 @@ func (s *Server) Send(pack connection.IPacket, fd int) error {
 		return fmt.Errorf("pack is nil")
 	}
 
-	select {
-	case c.WQueue() <- buf:
-		return nil
-	}
+	c.WQueue() <- buf
+	return nil
 }
 
 func (s *Server) Shutdown() {
@@ -190,9 +190,7 @@ func (s *Server) rloop(conn connection.IConnection) {
 			break
 		}
 
-		select {
-		case conn.RQueue() <- pack:
-		}
+		conn.RQueue() <- pack
 	}
 }
 
@@ -206,30 +204,28 @@ func (s *Server) handlerConn(conn connection.IConnection) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-conn_loop:
 	for {
 		select {
 		case <-ticker.C:
 			if conn.Expired() {
 				debug.Warn("conn[%d] is expired", conn.FD())
 				conn.Close()
-				break conn_loop
+				return
 			}
 		case pack, ok := <-conn.RQueue():
 			if !ok {
-				break conn_loop
+				return
 			}
 			if pack == nil {
-				continue conn_loop
+				return
 			}
-			s.wait.Add(1)
-			go s.handlerPacket(pack, conn)
+			s.handlerPacket(pack, conn)
 		case pack, ok := <-conn.WQueue():
 			if !ok {
-				break conn_loop
+				return
 			}
 			if pack == nil {
-				continue conn_loop
+				return
 			}
 
 			n, err := conn.Write(pack)
@@ -239,7 +235,6 @@ conn_loop:
 }
 
 func (s *Server) handlerPacket(pack connection.IPacket, conn connection.IConnection) {
-	defer s.wait.Done()
 	defer func() {
 		run.Panic(recover())
 	}()

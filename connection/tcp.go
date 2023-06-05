@@ -8,6 +8,8 @@ import (
 	"net"
 	"strings"
 	"time"
+
+	"github.com/kovey/debug-go/debug"
 )
 
 const (
@@ -41,27 +43,35 @@ func Init(endian string) {
 
 func Int32ToBytes(num int32) []byte {
 	buf := bytes.NewBuffer([]byte{})
-	binary.Write(buf, nativeEndian, num)
+	if err := binary.Write(buf, nativeEndian, num); err != nil {
+		debug.Erro("int32 to bytes failure, error: %s", err)
+	}
 	return buf.Bytes()
 }
 
 func Int64ToBytes(num int64) []byte {
 	buf := bytes.NewBuffer([]byte{})
-	binary.Write(buf, nativeEndian, num)
+	if err := binary.Write(buf, nativeEndian, num); err != nil {
+		debug.Erro("int64 to bytes failure, error: %s", err)
+	}
 	return buf.Bytes()
 }
 
 func BytesToInt32(buf []byte) int32 {
 	b := bytes.NewBuffer(buf)
 	var num int32
-	binary.Read(b, nativeEndian, &num)
+	if err := binary.Read(b, nativeEndian, &num); err != nil {
+		debug.Erro("read int32 from bytes failure, error: %s", err)
+	}
 	return num
 }
 
 func BytesToInt64(buf []byte) int64 {
 	b := bytes.NewBuffer(buf)
 	var num int64
-	binary.Read(b, nativeEndian, &num)
+	if err := binary.Read(b, nativeEndian, &num); err != nil {
+		debug.Erro("read int64 from bytes failure, error: %s", err)
+	}
 	return num
 }
 
@@ -81,7 +91,7 @@ func (t *Tcp) Close() error {
 func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 	for {
 		l := len(t.buf)
-		hBuf := make([]byte, hLen)
+		var hBuf []byte
 		if l >= hLen {
 			hBuf = t.buf[:hLen]
 		} else {
