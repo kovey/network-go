@@ -85,9 +85,13 @@ func (c *Client) rloop() {
 		}
 
 		if err != nil {
-			c.shutdown <- true
-			debug.Erro("connection[%d] read data failure, error: %s", c.cli.Connection().FD(), err)
-			break
+			if !c.handler.Try(c) {
+				c.shutdown <- true
+				debug.Erro("connection[%d] read data failure, error: %s", c.cli.Connection().FD(), err)
+				break
+			}
+
+			continue
 		}
 
 		if c == nil || c.handler == nil {
@@ -156,7 +160,6 @@ func (c *Client) handlerIdle() {
 
 func (c *Client) Close() {
 	c.handler.Shutdown()
-	c.handler = nil
 	c.cli.Connection().Close()
 	c.ticker.Stop()
 	c.wait.Wait()
