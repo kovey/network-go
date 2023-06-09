@@ -74,7 +74,15 @@ func (c *Client) rloop() {
 		run.Panic(recover())
 	}()
 	for {
+		if c.isShutdown {
+			break
+		}
+
 		pbuf, err := c.cli.Connection().Read(c.config.HeaderLength, c.config.BodyLenLen, c.config.BodyLenOffset)
+		if c.isShutdown {
+			break
+		}
+
 		if err == io.EOF {
 			if !c.handler.Try(c) {
 				c.shutdown <- true
