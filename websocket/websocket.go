@@ -10,9 +10,8 @@ import (
 )
 
 type WebSocket struct {
-	fd       int
+	fd       uint64
 	conn     *websocket.Conn
-	rQueue   chan connection.IPacket
 	wQueue   chan []byte
 	packet   func(buf []byte) (connection.IPacket, error)
 	buf      []byte
@@ -23,10 +22,9 @@ func Dial(protocol, host string, port int, path string) (*websocket.Conn, error)
 	return websocket.Dial(fmt.Sprintf("%s://%s:%d/%s", protocol, host, port, path), "", fmt.Sprintf("%s://%s", "http", host))
 }
 
-func NewWebSocket(fd int, conn *websocket.Conn) *WebSocket {
+func NewWebSocket(fd uint64, conn *websocket.Conn) *WebSocket {
 	return &WebSocket{
-		fd, conn, make(chan connection.IPacket, connection.CHANNEL_PACKET_MAX),
-		make(chan []byte, connection.CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false,
+		fd, conn, make(chan []byte, connection.CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false,
 	}
 }
 
@@ -54,11 +52,7 @@ func (t *WebSocket) WQueue() chan []byte {
 	return t.wQueue
 }
 
-func (t *WebSocket) RQueue() chan connection.IPacket {
-	return t.rQueue
-}
-
-func (t *WebSocket) FD() int {
+func (t *WebSocket) FD() uint64 {
 	return t.fd
 }
 

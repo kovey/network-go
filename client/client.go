@@ -117,7 +117,7 @@ func (c *Client) rloop() {
 			continue
 		}
 
-		c.cli.Connection().RQueue() <- pack
+		c.handlerPacket(pack)
 	}
 }
 
@@ -131,14 +131,6 @@ func (c *Client) Loop() {
 			c.Close()
 			c.isShutdown = true
 			return
-		case pack, ok := <-c.cli.Connection().RQueue():
-			if !ok {
-				c.Close()
-				c.isShutdown = true
-				return
-			}
-			c.wait.Add(1)
-			go c.handlerPacket(pack)
 		case pack, ok := <-c.cli.Connection().WQueue():
 			if !ok {
 				c.Close()

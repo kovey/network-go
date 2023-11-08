@@ -20,9 +20,8 @@ const (
 var nativeEndian binary.ByteOrder = binary.BigEndian
 
 type Tcp struct {
-	fd       int
+	fd       uint64
 	conn     net.Conn
-	rQueue   chan IPacket
 	wQueue   chan []byte
 	packet   func(buf []byte) (IPacket, error)
 	buf      []byte
@@ -75,8 +74,8 @@ func BytesToInt64(buf []byte) int64 {
 	return num
 }
 
-func NewTcp(fd int, conn net.Conn) *Tcp {
-	return &Tcp{fd, conn, make(chan IPacket, CHANNEL_PACKET_MAX), make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, Packet_Max_Len), false, time.Now().Unix()}
+func NewTcp(fd uint64, conn net.Conn) *Tcp {
+	return &Tcp{fd, conn, make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, Packet_Max_Len), false, time.Now().Unix()}
 }
 
 func (t *Tcp) Close() error {
@@ -155,11 +154,7 @@ func (t *Tcp) WQueue() chan []byte {
 	return t.wQueue
 }
 
-func (t *Tcp) RQueue() chan IPacket {
-	return t.rQueue
-}
-
-func (t *Tcp) FD() int {
+func (t *Tcp) FD() uint64 {
 	return t.fd
 }
 

@@ -14,7 +14,7 @@ import (
 type WebSocketService struct {
 	connMax   int
 	connCount int
-	curFD     int
+	curFD     uint64
 	listener  net.Listener
 	locker    sync.Mutex
 	isClosed  bool

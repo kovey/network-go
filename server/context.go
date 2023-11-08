@@ -1,9 +1,11 @@
 package server
 
 import (
+	"context"
 	"fmt"
-	"github.com/kovey/network-go/connection"
 	"sync"
+
+	"github.com/kovey/network-go/connection"
 )
 
 var pool = sync.Pool{
@@ -13,10 +15,15 @@ var pool = sync.Pool{
 }
 
 type Context struct {
+	context.Context
 	conn    connection.IConnection
 	pack    connection.IPacket
 	traceId string
 	spanId  string
+}
+
+func (c *Context) Init(ctx context.Context) {
+	c.Context = ctx
 }
 
 func (c *Context) SetTraceId(traceId string) {
@@ -56,6 +63,7 @@ func (c *Context) Reset() {
 	c.pack = nil
 	c.traceId = ""
 	c.spanId = ""
+	c.Context = nil
 }
 
 func putContext(c *Context) {
@@ -64,10 +72,11 @@ func putContext(c *Context) {
 }
 
 func getContext() (*Context, error) {
-	context, ok := pool.Get().(*Context)
+	ctx, ok := pool.Get().(*Context)
 	if !ok {
 		return nil, fmt.Errorf("context is not exists")
 	}
 
-	return context, nil
+	ctx.Init(context.Background())
+	return ctx, nil
 }

@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 
 	"github.com/kovey/network-go/connection"
 
@@ -21,7 +21,7 @@ type HostInfo struct {
 }
 
 func (c *Config) Load(path string) error {
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func (c *Config) Load(path string) error {
 }
 
 func (c *Config) Yaml(path string) error {
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}

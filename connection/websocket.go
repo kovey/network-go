@@ -11,9 +11,8 @@ import (
 )
 
 type WebSocket struct {
-	fd       int
+	fd       uint64
 	conn     net.Conn
-	rQueue   chan IPacket
 	wQueue   chan []byte
 	packet   func(buf []byte) (IPacket, error)
 	buf      []byte
@@ -21,8 +20,8 @@ type WebSocket struct {
 	lastTime int64
 }
 
-func NewWebSocket(fd int, conn net.Conn) *WebSocket {
-	return &WebSocket{fd, conn, make(chan IPacket, CHANNEL_PACKET_MAX), make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false, time.Now().Unix()}
+func NewWebSocket(fd uint64, conn net.Conn) *WebSocket {
+	return &WebSocket{fd, conn, make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false, time.Now().Unix()}
 }
 
 func (t *WebSocket) Close() error {
@@ -61,11 +60,7 @@ func (t *WebSocket) WQueue() chan []byte {
 	return t.wQueue
 }
 
-func (t *WebSocket) RQueue() chan IPacket {
-	return t.rQueue
-}
-
-func (t *WebSocket) FD() int {
+func (t *WebSocket) FD() uint64 {
 	return t.fd
 }
 

@@ -6,8 +6,7 @@ type IConnection interface {
 	Send(IPacket) error
 	SendBytes([]byte) error
 	Close() error
-	FD() int
-	RQueue() chan IPacket
+	FD() uint64
 	WQueue() chan []byte
 	Closed() bool
 	RemoteIp() string

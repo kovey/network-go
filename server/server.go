@@ -93,7 +93,7 @@ func (s *Server) loop() {
 	debug.Warn("server main loop exit")
 }
 
-func (s *Server) Close(fd int) error {
+func (s *Server) Close(fd uint64) error {
 	conn, ok := s.conns.Load(fd)
 	if !ok {
 		return nil
@@ -145,7 +145,7 @@ func (s *Server) Send(pack connection.IPacket, fd int) error {
 func (s *Server) Shutdown() {
 	s.service.Shutdown()
 	s.conns.Range(func(fd, conn interface{}) bool {
-		id, ok := fd.(int)
+		id, ok := fd.(uint64)
 		if !ok {
 			return true
 		}
@@ -190,7 +190,7 @@ func (s *Server) rloop(conn connection.IConnection) {
 			break
 		}
 
-		conn.RQueue() <- pack
+		s.handlerPacket(pack, conn)
 	}
 }
 
@@ -212,14 +212,6 @@ func (s *Server) handlerConn(conn connection.IConnection) {
 				conn.Close()
 				return
 			}
-		case pack, ok := <-conn.RQueue():
-			if !ok {
-				return
-			}
-			if pack == nil {
-				return
-			}
-			s.handlerPacket(pack, conn)
 		case pack, ok := <-conn.WQueue():
 			if !ok {
 				return
