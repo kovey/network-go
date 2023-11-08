@@ -56,7 +56,6 @@ func (s *Server) listenAndServ() error {
 }
 
 func (s *Server) connect(conn connection.IConnection) {
-	defer s.wait.Done()
 	defer func() {
 		run.Panic(recover())
 	}()
@@ -85,8 +84,6 @@ func (s *Server) loop() {
 		}
 
 		s.conns.Store(conn.FD(), conn)
-		s.wait.Add(1)
-		go s.connect(conn)
 		s.wait.Add(1)
 		go s.handlerConn(conn)
 	}
@@ -159,6 +156,7 @@ func (s *Server) Shutdown() {
 }
 
 func (s *Server) rloop(conn connection.IConnection) {
+	s.connect(conn)
 	defer s.wait.Done()
 	defer func() {
 		run.Panic(recover())

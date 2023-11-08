@@ -13,9 +13,9 @@ type WebSocket struct {
 	fd       uint64
 	conn     *websocket.Conn
 	wQueue   chan []byte
-	packet   func(buf []byte) (connection.IPacket, error)
 	buf      []byte
 	isClosed bool
+	ext      map[int64]any
 }
 
 func Dial(protocol, host string, port int, path string) (*websocket.Conn, error) {
@@ -24,7 +24,8 @@ func Dial(protocol, host string, port int, path string) (*websocket.Conn, error)
 
 func NewWebSocket(fd uint64, conn *websocket.Conn) *WebSocket {
 	return &WebSocket{
-		fd, conn, make(chan []byte, connection.CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false,
+		fd: fd, conn: conn, wQueue: make(chan []byte, connection.CHANNEL_PACKET_MAX),
+		buf: make([]byte, 0, 2097152), isClosed: false, ext: make(map[int64]any),
 	}
 }
 
@@ -92,4 +93,13 @@ func (t *WebSocket) RemoteIp() string {
 
 func (t *WebSocket) Expired() bool {
 	return false
+}
+
+func (t *WebSocket) Set(key int64, val any) {
+	t.ext[key] = val
+}
+
+func (t *WebSocket) Get(key int64) (any, bool) {
+	val, ok := t.ext[key]
+	return val, ok
 }

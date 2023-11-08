@@ -1,6 +1,6 @@
 module github.com/kovey/network-go
 
-go 1.17
+go 1.20
 
 require (
 	github.com/gobwas/ws v1.1.0

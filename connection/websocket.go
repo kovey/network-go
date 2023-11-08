@@ -14,14 +14,17 @@ type WebSocket struct {
 	fd       uint64
 	conn     net.Conn
 	wQueue   chan []byte
-	packet   func(buf []byte) (IPacket, error)
 	buf      []byte
 	isClosed bool
 	lastTime int64
+	ext      map[int64]any
 }
 
 func NewWebSocket(fd uint64, conn net.Conn) *WebSocket {
-	return &WebSocket{fd, conn, make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, 2097152), false, time.Now().Unix()}
+	return &WebSocket{
+		fd: fd, conn: conn, wQueue: make(chan []byte, CHANNEL_PACKET_MAX), ext: make(map[int64]any),
+		buf: make([]byte, 0, 2097152), isClosed: false, lastTime: time.Now().Unix(),
+	}
 }
 
 func (t *WebSocket) Close() error {
@@ -104,4 +107,13 @@ func (t *WebSocket) RemoteIp() string {
 
 func (t *WebSocket) Expired() bool {
 	return time.Now().Unix() > t.lastTime+60
+}
+
+func (t *WebSocket) Set(key int64, val any) {
+	t.ext[key] = val
+}
+
+func (t *WebSocket) Get(key int64) (any, bool) {
+	val, ok := t.ext[key]
+	return val, ok
 }

@@ -23,10 +23,10 @@ type Tcp struct {
 	fd       uint64
 	conn     net.Conn
 	wQueue   chan []byte
-	packet   func(buf []byte) (IPacket, error)
 	buf      []byte
 	isClosed bool
 	lastTime int64
+	ext      map[int64]any
 }
 
 func Init(endian string) {
@@ -75,7 +75,10 @@ func BytesToInt64(buf []byte) int64 {
 }
 
 func NewTcp(fd uint64, conn net.Conn) *Tcp {
-	return &Tcp{fd, conn, make(chan []byte, CHANNEL_PACKET_MAX), nil, make([]byte, 0, Packet_Max_Len), false, time.Now().Unix()}
+	return &Tcp{
+		fd: fd, conn: conn, wQueue: make(chan []byte, CHANNEL_PACKET_MAX), ext: make(map[int64]any),
+		buf: make([]byte, 0, Packet_Max_Len), isClosed: false, lastTime: time.Now().Unix(),
+	}
 }
 
 func (t *Tcp) Close() error {
@@ -194,4 +197,13 @@ func (t *Tcp) RemoteIp() string {
 
 func (t *Tcp) Expired() bool {
 	return time.Now().Unix() > t.lastTime+60
+}
+
+func (t *Tcp) Set(userId int64, val any) {
+	t.ext[userId] = val
+}
+
+func (t *Tcp) Get(userId int64) (any, bool) {
+	val, ok := t.ext[userId]
+	return val, ok
 }
