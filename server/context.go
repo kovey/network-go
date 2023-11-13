@@ -2,28 +2,37 @@ package server
 
 import (
 	"context"
-	"fmt"
-	"sync"
 
 	"github.com/kovey/network-go/connection"
+	"github.com/kovey/pool"
+	"github.com/kovey/pool/object"
 )
 
-var pool = sync.Pool{
-	New: func() interface{} {
-		return &Context{}
-	},
+const (
+	ctx_namespace = "ko.network.context"
+	ctx_name      = "Context"
+)
+
+func init() {
+	pool.DefaultNoCtx(ctx_namespace, ctx_name, func() any {
+		return &Context{ObjNoCtx: object.NewObjNoCtx(ctx_namespace, ctx_name)}
+	})
 }
 
 type Context struct {
-	context.Context
+	*object.ObjNoCtx
+	*pool.Context
 	conn    connection.IConnection
 	pack    connection.IPacket
 	traceId string
 	spanId  string
 }
 
-func (c *Context) Init(ctx context.Context) {
-	c.Context = ctx
+func NewContext(parent context.Context) *Context {
+	pc := pool.NewContext(parent)
+	ctx := pc.GetNoCtx(ctx_namespace, ctx_name).(*Context)
+	ctx.Context = pc
+	return ctx
 }
 
 func (c *Context) SetTraceId(traceId string) {
@@ -64,19 +73,4 @@ func (c *Context) Reset() {
 	c.traceId = ""
 	c.spanId = ""
 	c.Context = nil
-}
-
-func putContext(c *Context) {
-	c.Reset()
-	pool.Put(c)
-}
-
-func getContext() (*Context, error) {
-	ctx, ok := pool.Get().(*Context)
-	if !ok {
-		return nil, fmt.Errorf("context is not exists")
-	}
-
-	ctx.Init(context.Background())
-	return ctx, nil
 }

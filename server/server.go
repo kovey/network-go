@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"sync"
@@ -230,18 +231,13 @@ func (s *Server) handlerPacket(pack connection.IPacket, conn connection.IConnect
 	defer func() {
 		run.Panic(recover())
 	}()
-	context, err := getContext()
-	if err != nil {
-		debug.Erro("get context error: %s", err)
-		return
-	}
-	defer putContext(context)
+	context := NewContext(context.Background())
+	defer context.Drop()
 
 	context.SetConnection(conn)
 	context.SetPack(pack)
 
-	err = s.handler.Receive(context)
-	if err != nil {
+	if err := s.handler.Receive(context); err != nil {
 		debug.Erro("handler receive error: %s", err)
 	}
 }
