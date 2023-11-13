@@ -135,8 +135,7 @@ func (s *Server) Send(pack connection.IPacket, fd int) error {
 		return fmt.Errorf("pack is nil")
 	}
 
-	c.WQueue() <- buf
-	return nil
+	return c.SendBytes(buf)
 }
 
 func (s *Server) Shutdown() {
@@ -204,6 +203,9 @@ func (s *Server) handlerConn(conn connection.IConnection) {
 
 	for {
 		select {
+		case <-conn.SQueue():
+			debug.Warn("conn[%d] closed", conn.FD())
+			return
 		case <-ticker.C:
 			if conn.Expired() {
 				debug.Warn("conn[%d] is expired", conn.FD())

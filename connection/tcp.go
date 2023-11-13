@@ -23,6 +23,7 @@ type Tcp struct {
 	fd       uint64
 	conn     net.Conn
 	wQueue   chan []byte
+	sQueue   chan bool
 	buf      []byte
 	isClosed bool
 	lastTime int64
@@ -77,7 +78,7 @@ func BytesToInt64(buf []byte) int64 {
 func NewTcp(fd uint64, conn net.Conn) *Tcp {
 	return &Tcp{
 		fd: fd, conn: conn, wQueue: make(chan []byte, CHANNEL_PACKET_MAX), ext: make(map[int64]any),
-		buf: make([]byte, 0, Packet_Max_Len), isClosed: false, lastTime: time.Now().Unix(),
+		buf: make([]byte, 0, Packet_Max_Len), isClosed: false, lastTime: time.Now().Unix(), sQueue: make(chan bool, 5),
 	}
 }
 
@@ -87,6 +88,7 @@ func (t *Tcp) Close() error {
 	}
 
 	t.isClosed = true
+	t.sQueue <- true
 	return t.conn.Close()
 }
 
@@ -153,7 +155,7 @@ func (t *Tcp) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 	}
 }
 
-func (t *Tcp) WQueue() chan []byte {
+func (t *Tcp) WQueue() <-chan []byte {
 	return t.wQueue
 }
 
@@ -206,4 +208,8 @@ func (t *Tcp) Set(userId int64, val any) {
 func (t *Tcp) Get(userId int64) (any, bool) {
 	val, ok := t.ext[userId]
 	return val, ok
+}
+
+func (t *Tcp) SQueue() <-chan bool {
+	return t.sQueue
 }

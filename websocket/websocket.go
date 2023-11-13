@@ -13,6 +13,7 @@ type WebSocket struct {
 	fd       uint64
 	conn     *websocket.Conn
 	wQueue   chan []byte
+	sQueue   chan bool
 	buf      []byte
 	isClosed bool
 	ext      map[int64]any
@@ -25,7 +26,7 @@ func Dial(protocol, host string, port int, path string) (*websocket.Conn, error)
 func NewWebSocket(fd uint64, conn *websocket.Conn) *WebSocket {
 	return &WebSocket{
 		fd: fd, conn: conn, wQueue: make(chan []byte, connection.CHANNEL_PACKET_MAX),
-		buf: make([]byte, 0, 2097152), isClosed: false, ext: make(map[int64]any),
+		buf: make([]byte, 0, 2097152), isClosed: false, ext: make(map[int64]any), sQueue: make(chan bool, 5),
 	}
 }
 
@@ -35,6 +36,7 @@ func (t *WebSocket) Close() error {
 	}
 
 	t.isClosed = true
+	t.sQueue <- true
 	return t.conn.Close()
 }
 
@@ -49,7 +51,7 @@ func (t *WebSocket) Read(hLen, bLen, bLenOffset int) ([]byte, error) {
 	return hBuf[:n], nil
 }
 
-func (t *WebSocket) WQueue() chan []byte {
+func (t *WebSocket) WQueue() <-chan []byte {
 	return t.wQueue
 }
 
@@ -102,4 +104,8 @@ func (t *WebSocket) Set(key int64, val any) {
 func (t *WebSocket) Get(key int64) (any, bool) {
 	val, ok := t.ext[key]
 	return val, ok
+}
+
+func (t *WebSocket) SQueue() <-chan bool {
+	return t.sQueue
 }

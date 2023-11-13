@@ -7,12 +7,13 @@ type IConnection interface {
 	SendBytes([]byte) error
 	Close() error
 	FD() uint64
-	WQueue() chan []byte
+	WQueue() <-chan []byte
 	Closed() bool
 	RemoteIp() string
 	Expired() bool
 	Set(key int64, value any)
 	Get(key int64) (any, bool)
+	SQueue() <-chan bool
 }
 
 func Get[T any](conn IConnection, key int64) T {

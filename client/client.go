@@ -191,6 +191,5 @@ func (c *Client) SendBytes(buf []byte) error {
 		return fmt.Errorf("connection[%d] is closed", c.cli.Connection().FD())
 	}
 
-	c.cli.Connection().WQueue() <- buf
-	return nil
+	return c.cli.Connection().SendBytes(buf)
 }
