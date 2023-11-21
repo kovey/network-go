@@ -55,7 +55,6 @@ func (c *Client) Dial(host string, port int) error {
 }
 
 func (c *Client) handlerPacket(pack connection.IPacket) {
-	defer c.wait.Done()
 	defer func() {
 		run.Panic(recover())
 	}()
