@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	"github.com/kovey/network-go/connection"
+	"github.com/kovey/network-go/v2/connection"
 	"github.com/kovey/pool"
 	"github.com/kovey/pool/object"
 )
@@ -22,10 +22,10 @@ func init() {
 type Context struct {
 	*object.ObjNoCtx
 	*pool.Context
-	conn    connection.IConnection
-	pack    connection.IPacket
-	traceId string
-	spanId  string
+	Conn    *connection.Connection
+	Data    []byte
+	TraceId string
+	SpanId  string
 }
 
 func NewContext(parent context.Context) *Context {
@@ -35,42 +35,10 @@ func NewContext(parent context.Context) *Context {
 	return ctx
 }
 
-func (c *Context) SetTraceId(traceId string) {
-	c.traceId = traceId
-}
-
-func (c *Context) SetSpanId(spanId string) {
-	c.spanId = spanId
-}
-
-func (c *Context) SetConnection(conn connection.IConnection) {
-	c.conn = conn
-}
-
-func (c *Context) SetPack(pack connection.IPacket) {
-	c.pack = pack
-}
-
-func (c *Context) Connection() connection.IConnection {
-	return c.conn
-}
-
-func (c *Context) Pack() connection.IPacket {
-	return c.pack
-}
-
-func (c *Context) TraceId() string {
-	return c.traceId
-}
-
-func (c *Context) SpanId() string {
-	return c.spanId
-}
-
 func (c *Context) Reset() {
-	c.conn = nil
-	c.pack = nil
-	c.traceId = ""
-	c.spanId = ""
+	c.Conn = nil
+	c.Data = nil
+	c.TraceId = ""
+	c.SpanId = ""
 	c.Context = nil
 }

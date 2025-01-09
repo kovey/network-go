@@ -4,15 +4,12 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/kovey/network-go/connection"
-
 	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	PConfig connection.PacketConfig `json:"packet_config" yaml:"packet_config"`
-	Host    string                  `json:"host" yaml:"host"`
-	Port    int                     `json:"port" yaml:"port"`
+	Host string `json:"host" yaml:"host"`
+	Port int    `json:"port" yaml:"port"`
 }
 
 type HostInfo struct {

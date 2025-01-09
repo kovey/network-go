@@ -5,26 +5,24 @@ import (
 	"fmt"
 	"io"
 	"sync"
-	"time"
 
 	"github.com/kovey/debug-go/debug"
 	"github.com/kovey/debug-go/run"
-	"github.com/kovey/network-go/connection"
+	"github.com/kovey/network-go/v2/connection"
 )
 
 type IService interface {
 	Listen(host string, port int) error
-	Accept() (connection.IConnection, error)
+	Accept() (*connection.Connection, error)
 	Close()
 	Shutdown()
 	IsClosed() bool
 }
 
 type IHandler interface {
-	Connect(connection.IConnection) error
+	Connect(*connection.Connection) error
 	Receive(*Context) error
-	Close(connection.IConnection) error
-	Packet([]byte) (connection.IPacket, error)
+	Close(*connection.Connection) error
 }
 
 type Server struct {
@@ -38,7 +36,6 @@ type Server struct {
 }
 
 func NewServer(config Config) *Server {
-	connection.Init(config.PConfig.Endian)
 	return &Server{conns: sync.Map{}, wait: sync.WaitGroup{}, config: config, isMaintain: false}
 }
 
@@ -56,7 +53,7 @@ func (s *Server) listenAndServ() error {
 	return s.service.Listen(s.config.Host, s.config.Port)
 }
 
-func (s *Server) connect(conn connection.IConnection) {
+func (s *Server) connect(conn *connection.Connection) {
 	defer func() {
 		run.Panic(recover())
 	}()
@@ -97,7 +94,7 @@ func (s *Server) Close(fd uint64) error {
 		return nil
 	}
 	s.conns.Delete(fd)
-	c, sure := conn.(connection.IConnection)
+	c, sure := conn.(*connection.Connection)
 	if !sure {
 		return nil
 	}
@@ -112,7 +109,7 @@ func (s *Server) Close(fd uint64) error {
 	return s.handler.Close(c)
 }
 
-func (s *Server) Send(pack connection.IPacket, fd int) error {
+func (s *Server) Send(pack []byte, fd int) error {
 	if pack == nil {
 		return fmt.Errorf("pack is empty")
 	}
@@ -122,21 +119,12 @@ func (s *Server) Send(pack connection.IPacket, fd int) error {
 		return fmt.Errorf("connection[%d] is not exists", fd)
 	}
 
-	c, sure := conn.(connection.IConnection)
+	c, sure := conn.(*connection.Connection)
 	if !sure {
 		return fmt.Errorf("connection[%d] is not implements connection.IConnection", fd)
 	}
 
-	if c.Closed() {
-		return fmt.Errorf("connection[%d] is closed", fd)
-	}
-
-	buf := pack.Serialize()
-	if buf == nil {
-		return fmt.Errorf("pack is nil")
-	}
-
-	return c.SendBytes(buf)
+	return c.Write(pack)
 }
 
 func (s *Server) Shutdown() {
@@ -155,7 +143,7 @@ func (s *Server) Shutdown() {
 	s.handler = nil
 }
 
-func (s *Server) rloop(conn connection.IConnection) {
+func (s *Server) handlerConn(conn *connection.Connection) {
 	s.connect(conn)
 	defer s.wait.Done()
 	defer func() {
@@ -163,7 +151,7 @@ func (s *Server) rloop(conn connection.IConnection) {
 	}()
 	defer s.Close(conn.FD())
 	for {
-		pbuf, err := conn.Read(s.config.PConfig.HeaderLength, s.config.PConfig.BodyLenLen, s.config.PConfig.BodyLenOffset)
+		pbuf, err := conn.Read()
 		if err == io.EOF {
 			break
 		}
@@ -178,64 +166,19 @@ func (s *Server) rloop(conn connection.IConnection) {
 			continue
 		}
 
-		pack, e := s.handler.Packet(pbuf)
-		if e != nil || pack == nil {
-			debug.Erro("get packet error or packet is nil: %s, %+v", e, pack)
-			continue
-		}
-
-		if conn.Closed() {
-			break
-		}
-
-		s.handlerPacket(pack, conn)
+		s.handlerPacket(pbuf, conn)
 	}
 }
 
-func (s *Server) handlerConn(conn connection.IConnection) {
-	defer s.wait.Done()
-	defer func() {
-		run.Panic(recover())
-	}()
-	s.wait.Add(1)
-	go s.rloop(conn)
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-conn.SQueue():
-			debug.Warn("conn[%d] closed", conn.FD())
-			return
-		case <-ticker.C:
-			if conn.Expired() {
-				debug.Warn("conn[%d] is expired", conn.FD())
-				conn.Close()
-				return
-			}
-		case pack, ok := <-conn.WQueue():
-			if !ok {
-				return
-			}
-			if pack == nil {
-				return
-			}
-
-			n, err := conn.Write(pack)
-			debug.Dbug("send data result, n[%d], err[%s]", n, err)
-		}
-	}
-}
-
-func (s *Server) handlerPacket(pack connection.IPacket, conn connection.IConnection) {
+func (s *Server) handlerPacket(data []byte, conn *connection.Connection) {
 	defer func() {
 		run.Panic(recover())
 	}()
 	context := NewContext(context.Background())
 	defer context.Drop()
 
-	context.SetConnection(conn)
-	context.SetPack(pack)
+	context.Conn = conn
+	context.Data = data
 
 	if err := s.handler.Receive(context); err != nil {
 		debug.Erro("handler receive error: %s", err)
