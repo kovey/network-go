@@ -30,27 +30,27 @@ func (t *Tcp) Connection() *connection.Connection {
 	return t.conn
 }
 
-func (t *Tcp) HeaderLenType(l connection.HeaderLenType) *Tcp {
-	t.conn.HeaderLenType(l)
+func (t *Tcp) WithHeaderLenType(l connection.HeaderLenType) *Tcp {
+	t.conn.WithHeaderLenType(l)
 	return t
 }
 
-func (t *Tcp) Endian(e binary.ByteOrder) *Tcp {
-	t.conn.Endian(e)
+func (t *Tcp) WithEndian(e binary.ByteOrder) *Tcp {
+	t.conn.WithEndian(e)
 	return t
 }
 
-func (t *Tcp) MaxLen(maxLen int) *Tcp {
-	t.conn.MaxLen(maxLen)
+func (t *Tcp) WithMaxLen(maxLen int) *Tcp {
+	t.conn.WithMaxLen(maxLen)
 	return t
 }
 
-func (t *Tcp) BodyLenghLen(length int) *Tcp {
-	t.conn.BodyLenghLen(length)
+func (t *Tcp) WithBodyLenghLen(length int) *Tcp {
+	t.conn.WithBodyLenghLen(length)
 	return t
 }
 
-func (t *Tcp) BodyLenOffset(offset int) *Tcp {
-	t.conn.BodyLenOffset(offset)
+func (t *Tcp) WithBodyLenOffset(offset int) *Tcp {
+	t.conn.WithBodyLenOffset(offset)
 	return t
 }

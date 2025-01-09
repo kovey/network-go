@@ -45,7 +45,7 @@ func (c *Connection) FD() uint64 {
 	return c.fd
 }
 
-func (c *Connection) HeaderLenType(t HeaderLenType) *Connection {
+func (c *Connection) WithHeaderLenType(t HeaderLenType) *Connection {
 	c.headerLenType = t
 	switch t {
 	case Len_Type_Int8, Len_Type_UInt8:
@@ -63,23 +63,23 @@ func (c *Connection) HeaderLenType(t HeaderLenType) *Connection {
 	return c
 }
 
-func (c *Connection) Endian(e binary.ByteOrder) *Connection {
+func (c *Connection) WithEndian(e binary.ByteOrder) *Connection {
 	c.endian = e
 	return c
 }
 
-func (c *Connection) MaxLen(maxLen int) *Connection {
+func (c *Connection) WithMaxLen(maxLen int) *Connection {
 	c.maxLen = maxLen
 	c.packBuff = make([]byte, c.maxLen)
 	return c
 }
 
-func (c *Connection) BodyLenghLen(length int) *Connection {
+func (c *Connection) WithBodyLenghLen(length int) *Connection {
 	c.bodyLengthLen = length
 	return c
 }
 
-func (c *Connection) BodyLenOffset(offset int) *Connection {
+func (c *Connection) WithBodyLenOffset(offset int) *Connection {
 	c.bodyLenOffset = offset
 	return c
 }

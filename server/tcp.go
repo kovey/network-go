@@ -28,27 +28,27 @@ func NewTcpService(connMax int) *TcpService {
 	return &TcpService{connMax: connMax, locker: sync.Mutex{}}
 }
 
-func (c *TcpService) HeaderLenType(t connection.HeaderLenType) *TcpService {
+func (c *TcpService) WithHeaderLenType(t connection.HeaderLenType) *TcpService {
 	c.headerLenType = t
 	return c
 }
 
-func (c *TcpService) Endian(e binary.ByteOrder) *TcpService {
+func (c *TcpService) WithEndian(e binary.ByteOrder) *TcpService {
 	c.endian = e
 	return c
 }
 
-func (c *TcpService) MaxLen(maxLen int) *TcpService {
+func (c *TcpService) WithMaxLen(maxLen int) *TcpService {
 	c.maxLen = maxLen
 	return c
 }
 
-func (c *TcpService) BodyLenghLen(length int) *TcpService {
+func (c *TcpService) WithBodyLenghLen(length int) *TcpService {
 	c.bodyLengthLen = length
 	return c
 }
 
-func (c *TcpService) BodyLenOffset(offset int) *TcpService {
+func (c *TcpService) WithBodyLenOffset(offset int) *TcpService {
 	c.bodyLenOffset = offset
 	return c
 }
@@ -81,7 +81,7 @@ func (t *TcpService) Accept() (*connection.Connection, error) {
 
 	t.connCount++
 	t.curFD++
-	return connection.NewConnection(t.curFD, conn).HeaderLenType(t.headerLenType).Endian(t.endian).MaxLen(t.maxLen).BodyLenghLen(t.bodyLengthLen).BodyLenOffset(t.bodyLenOffset), nil
+	return connection.NewConnection(t.curFD, conn).WithHeaderLenType(t.headerLenType).WithEndian(t.endian).WithMaxLen(t.maxLen).WithBodyLenghLen(t.bodyLengthLen).WithBodyLenOffset(t.bodyLenOffset), nil
 }
 
 func (t *TcpService) Close() {
