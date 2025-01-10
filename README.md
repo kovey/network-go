@@ -99,6 +99,24 @@ func (h *handler) Idle(cli *client.Client) error {
 }
 
 func (h *handler) Try(cli *client.Client) bool {
+	if err := cli.Redial(); err == nil {
+		return true
+	}
+
+	ticker := time.NewTicker(5 * time.Second)
+	count := 0
+	for {
+		<-ticker.C
+		if err := cli.Redial(); err == nil {
+			return true
+		}
+
+		count++
+		if count >= 10 {
+			break
+		}
+	}
+
 	return false
 }
 
