@@ -64,10 +64,6 @@ func (c *Client) handlerPacket(packet *connection.Packet) {
 	}
 }
 
-func (c *Client) Try() error {
-	return c.Dial(c.host, c.port)
-}
-
 func (c *Client) Loop() {
 	defer func() {
 		run.Panic(recover())
