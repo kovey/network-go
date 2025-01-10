@@ -30,13 +30,14 @@ type Server struct {
 	service    IService
 	handler    IHandler
 	wait       sync.WaitGroup
-	config     Config
 	isMaintain bool
+	host       string
+	port       int
 	OnSuccess  func(*Server)
 }
 
-func NewServer(config Config) *Server {
-	return &Server{conns: sync.Map{}, wait: sync.WaitGroup{}, config: config, isMaintain: false}
+func NewServer(host string, port int) *Server {
+	return &Server{conns: sync.Map{}, wait: sync.WaitGroup{}, host: host, port: port, isMaintain: false}
 }
 
 func (s *Server) SetService(service IService) *Server {
@@ -50,7 +51,7 @@ func (s *Server) SetHandler(handler IHandler) *Server {
 }
 
 func (s *Server) listenAndServ() error {
-	return s.service.Listen(s.config.Host, s.config.Port)
+	return s.service.Listen(s.host, s.port)
 }
 
 func (s *Server) connect(conn *connection.Connection) {
