@@ -43,6 +43,7 @@ func NewConnection(fd uint64, conn net.Conn) *Connection {
 }
 
 func (c *Connection) WithConn(conn net.Conn) *Connection {
+	c.readLen = 0
 	c.conn = conn
 	return c
 }

@@ -51,6 +51,10 @@ func (c *Client) Dial(host string, port int) error {
 	return c.cli.Dial(host, port)
 }
 
+func (c *Client) Redial() error {
+	return c.cli.Dial(c.host, c.port)
+}
+
 func (c *Client) handlerPacket(packet *connection.Packet) {
 	defer func() {
 		run.Panic(recover())
