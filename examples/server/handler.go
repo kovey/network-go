@@ -32,7 +32,7 @@ func (h *handler) Receive(ctx *server.Context) error {
 	}
 
 	debug.Info("data: %+v", dt)
-	ctx.Conn.Write(append(ctx.Data.Header, ctx.Data.Body...))
+	ctx.Conn.Write(ctx.Data.Bytes())
 	return nil
 }
 
