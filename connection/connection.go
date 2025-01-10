@@ -154,15 +154,16 @@ func (c *Connection) Read() (*Packet, error) {
 			return c.copyBuff(bodyLen), nil
 		}
 
+		if c.readLen >= c.maxLen {
+			return nil, Err_Packet_Out_Range
+		}
+
 		n, err := c.conn.Read(c.packBuff[c.readLen:])
 		if err != nil {
 			return nil, err
 		}
 
 		c.readLen += n
-		if c.readLen > c.maxLen {
-			return nil, Err_Packet_Out_Range
-		}
 	}
 }
 
