@@ -13,7 +13,7 @@ type Tcp struct {
 }
 
 func NewTcp() *Tcp {
-	return &Tcp{}
+	return &Tcp{conn: connection.NewConnection(1, nil)}
 }
 
 func (t *Tcp) Dial(host string, port int) error {
@@ -22,7 +22,7 @@ func (t *Tcp) Dial(host string, port int) error {
 		return err
 	}
 
-	t.conn = connection.NewConnection(1, conn)
+	t.conn.WithConn(conn)
 	return nil
 }
 

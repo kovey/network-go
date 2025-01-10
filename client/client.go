@@ -16,7 +16,7 @@ type IClient interface {
 }
 
 type IHandler interface {
-	Receive([]byte, *Client) error
+	Receive(*connection.Packet, *Client) error
 	Idle(*Client) error
 	Try(*Client) bool
 	Shutdown()
@@ -51,11 +51,11 @@ func (c *Client) Dial(host string, port int) error {
 	return c.cli.Dial(host, port)
 }
 
-func (c *Client) handlerPacket(data []byte) {
+func (c *Client) handlerPacket(packet *connection.Packet) {
 	defer func() {
 		run.Panic(recover())
 	}()
-	if err := c.handler.Receive(data, c); err != nil {
+	if err := c.handler.Receive(packet, c); err != nil {
 		debug.Erro("connection[%d] on receive failure, error: %s", c.cli.Connection().FD(), err)
 	}
 }

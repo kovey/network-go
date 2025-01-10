@@ -9,6 +9,7 @@ import (
 
 var Err_Closed = errors.New("connection is closed")
 var Err_Unkown_Header_Len_Type = errors.New("unkown header length type")
+var Err_Packet_Out_Range = errors.New("packet out of range")
 
 type HeaderLenType byte
 
@@ -39,6 +40,11 @@ type Connection struct {
 
 func NewConnection(fd uint64, conn net.Conn) *Connection {
 	return &Connection{conn: conn, maxLen: 8192, headerLenType: Len_Type_Int32, headerLen: 4, endian: binary.BigEndian, fd: fd}
+}
+
+func (c *Connection) WithConn(conn net.Conn) *Connection {
+	c.conn = conn
+	return c
 }
 
 func (c *Connection) FD() uint64 {
@@ -93,7 +99,7 @@ func (c *Connection) Write(data []byte) error {
 	return err
 }
 
-func (c *Connection) Read() ([]byte, error) {
+func (c *Connection) Read() (*Packet, error) {
 	if c.packBuff == nil {
 		c.packBuff = make([]byte, c.maxLen)
 	}
@@ -119,17 +125,21 @@ func (c *Connection) Read() ([]byte, error) {
 		}
 
 		c.readLen += n
+		if c.readLen > c.maxLen {
+			return nil, Err_Packet_Out_Range
+		}
 	}
 }
 
-func (c *Connection) copyBuff(bodyLen int) []byte {
+func (c *Connection) copyBuff(bodyLen int) *Packet {
 	buffLen := c.headerLen + bodyLen
-	buff := make([]byte, buffLen)
-	copy(buff, c.packBuff)
+	p := &Packet{Body: make([]byte, bodyLen), Header: make([]byte, c.headerLen)}
+	copy(p.Header, c.packBuff[:c.headerLen])
+	copy(p.Body, c.packBuff[c.headerLen:])
 	copy(c.packBuff, c.packBuff[buffLen:c.readLen])
 	c.readLen -= buffLen
 
-	return buff
+	return p
 }
 
 func (c *Connection) bodyLen(data []byte) (int, error) {

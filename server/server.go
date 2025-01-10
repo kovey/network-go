@@ -170,7 +170,7 @@ func (s *Server) handlerConn(conn *connection.Connection) {
 	}
 }
 
-func (s *Server) handlerPacket(data []byte, conn *connection.Connection) {
+func (s *Server) handlerPacket(data *connection.Packet, conn *connection.Connection) {
 	defer func() {
 		run.Panic(recover())
 	}()

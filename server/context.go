@@ -23,7 +23,7 @@ type Context struct {
 	*object.ObjNoCtx
 	*pool.Context
 	Conn    *connection.Connection
-	Data    []byte
+	Data    *connection.Packet
 	TraceId string
 	SpanId  string
 }
