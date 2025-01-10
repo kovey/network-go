@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"fmt"
-	"io"
 	"sync"
+	"time"
 
 	"github.com/kovey/debug-go/debug"
 	"github.com/kovey/debug-go/run"
@@ -150,23 +150,29 @@ func (s *Server) handlerConn(conn *connection.Connection) {
 		run.Panic(recover())
 	}()
 	defer s.Close(conn.FD())
+	go conn.ReadLoop()
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
 	for {
-		pbuf, err := conn.Read()
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			debug.Erro("read data error: %s", err)
-			break
-		}
-
 		if s.isMaintain {
 			debug.Erro("server is into maintain")
 			continue
 		}
 
-		s.handlerPacket(pbuf, conn)
+		select {
+		case pbuf, ok := <-conn.Packets():
+			if !ok {
+				return
+			}
+
+			s.handlerPacket(pbuf, conn)
+		case now := <-ticker.C:
+			if conn.Expired(now) {
+				return
+			}
+		}
+
 	}
 }
 

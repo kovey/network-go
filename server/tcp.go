@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/kovey/debug-go/debug"
 	"github.com/kovey/network-go/v2/connection"
@@ -22,10 +23,16 @@ type TcpService struct {
 	bodyLenOffset int
 	headerLenType connection.HeaderLenType
 	endian        binary.ByteOrder
+	maxIdleTime   time.Duration
 }
 
 func NewTcpService(connMax int) *TcpService {
 	return &TcpService{connMax: connMax, locker: sync.Mutex{}}
+}
+
+func (c *TcpService) WithMaxIdleTime(maxIdleTime time.Duration) *TcpService {
+	c.maxIdleTime = maxIdleTime
+	return c
 }
 
 func (c *TcpService) WithHeaderLenType(t connection.HeaderLenType) *TcpService {
@@ -81,7 +88,7 @@ func (t *TcpService) Accept() (*connection.Connection, error) {
 
 	t.connCount++
 	t.curFD++
-	return connection.NewConnection(t.curFD, conn).WithHeaderLenType(t.headerLenType).WithEndian(t.endian).WithMaxLen(t.maxLen).WithBodyLenghLen(t.bodyLengthLen).WithBodyLenOffset(t.bodyLenOffset), nil
+	return connection.NewConnection(t.curFD, conn).WithHeaderLenType(t.headerLenType).WithEndian(t.endian).WithMaxLen(t.maxLen).WithBodyLenghLen(t.bodyLengthLen).WithBodyLenOffset(t.bodyLenOffset).WithMaxIdleTime(t.maxIdleTime), nil
 }
 
 func (t *TcpService) Close() {

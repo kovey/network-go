@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
+	"time"
 )
 
 var Err_Closed = errors.New("connection is closed")
@@ -25,21 +26,26 @@ const (
 )
 
 type Connection struct {
-	conn          net.Conn
-	maxLen        int
-	headerLen     int
-	bodyLengthLen int
-	bodyLenOffset int
-	packBuff      []byte
-	readLen       int
-	headerLenType HeaderLenType
-	endian        binary.ByteOrder
-	fd            uint64
-	isClosed      bool
+	conn           net.Conn
+	maxLen         int
+	headerLen      int
+	bodyLengthLen  int
+	bodyLenOffset  int
+	packBuff       []byte
+	readLen        int
+	headerLenType  HeaderLenType
+	endian         binary.ByteOrder
+	fd             uint64
+	isClosed       bool
+	connectTime    int64         // nano seconds
+	lastActiveTime int64         // nano seconds
+	maxIdleTime    time.Duration // max idle time
+	packets        chan *Packet
 }
 
 func NewConnection(fd uint64, conn net.Conn) *Connection {
-	return &Connection{conn: conn, maxLen: 8192, headerLenType: Len_Type_Int32, headerLen: 4, endian: binary.BigEndian, fd: fd}
+	now := time.Now()
+	return &Connection{conn: conn, maxLen: 8192, headerLenType: Len_Type_Int32, headerLen: 4, endian: binary.BigEndian, fd: fd, connectTime: now.UnixNano(), lastActiveTime: now.UnixNano(), packets: make(chan *Packet, 1024)}
 }
 
 func (c *Connection) WithConn(conn net.Conn) *Connection {
@@ -50,6 +56,19 @@ func (c *Connection) WithConn(conn net.Conn) *Connection {
 
 func (c *Connection) FD() uint64 {
 	return c.fd
+}
+
+func (c *Connection) Expired(now time.Time) bool {
+	if c.maxIdleTime <= 0 {
+		return false
+	}
+
+	return now.UnixNano() > c.lastActiveTime+int64(c.maxIdleTime)
+}
+
+func (c *Connection) WithMaxIdleTime(maxIdleTime time.Duration) *Connection {
+	c.maxIdleTime = maxIdleTime
+	return c
 }
 
 func (c *Connection) WithHeaderLenType(t HeaderLenType) *Connection {
@@ -100,6 +119,21 @@ func (c *Connection) Write(data []byte) error {
 	return err
 }
 
+func (c *Connection) ReadLoop() {
+	for {
+		packet, err := c.Read()
+		if err != nil {
+			break
+		}
+
+		c.packets <- packet
+	}
+}
+
+func (c *Connection) Packets() <-chan *Packet {
+	return c.packets
+}
+
 func (c *Connection) Read() (*Packet, error) {
 	if c.packBuff == nil {
 		c.packBuff = make([]byte, c.maxLen)
@@ -140,6 +174,7 @@ func (c *Connection) copyBuff(bodyLen int) *Packet {
 	copy(c.packBuff, c.packBuff[buffLen:c.readLen])
 	c.readLen -= buffLen
 
+	c.lastActiveTime = time.Now().UnixNano()
 	return p
 }
 

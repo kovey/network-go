@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/binary"
 	"encoding/json"
+	"time"
 
 	"github.com/kovey/debug-go/debug"
 	"github.com/kovey/network-go/v2/connection"
@@ -42,7 +43,7 @@ func (h *handler) Close(conn *connection.Connection) error {
 
 func main() {
 	tcp := server.NewTcpService(1024)
-	tcp.WithBodyLenOffset(0).WithBodyLenghLen(4).WithEndian(binary.BigEndian).WithHeaderLenType(connection.Len_Type_Int32).WithMaxLen(81290)
+	tcp.WithBodyLenOffset(0).WithBodyLenghLen(4).WithEndian(binary.BigEndian).WithHeaderLenType(connection.Len_Type_Int32).WithMaxLen(81290).WithMaxIdleTime(10 * time.Second)
 	serv := server.NewServer(server.Config{Host: "0.0.0.0", Port: 9910})
 	serv.SetHandler(&handler{})
 	serv.SetService(tcp)
