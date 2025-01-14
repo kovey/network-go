@@ -64,7 +64,7 @@ func (h *handler) Shutdown() {
 
 func main() {
 	tcp := client.NewTcp()
-	tcp.WithBodyLenOffset(0).WithBodyLenghLen(4).WithEndian(binary.BigEndian).WithHeaderLenType(connection.Len_Type_Int32).WithMaxLen(81920)
+	tcp.WithBodyLenOffset(0).WithBodyLengthLen(4).WithEndian(binary.BigEndian).WithHeaderLenType(connection.Len_Type_Int32).WithMaxLen(81920)
 	cli := client.NewClient()
 	cli.SetHandler(&handler{})
 	cli.SetService(tcp)

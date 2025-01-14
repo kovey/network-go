@@ -45,8 +45,8 @@ func (t *Tcp) WithMaxLen(maxLen int) *Tcp {
 	return t
 }
 
-func (t *Tcp) WithBodyLenghLen(length int) *Tcp {
-	t.conn.WithBodyLenghLen(length)
+func (t *Tcp) WithBodyLengthLen(length int) *Tcp {
+	t.conn.WithBodyLengthLen(length)
 	return t
 }
 

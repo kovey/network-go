@@ -100,7 +100,7 @@ func (c *Connection) WithMaxLen(maxLen int) *Connection {
 	return c
 }
 
-func (c *Connection) WithBodyLenghLen(length int) *Connection {
+func (c *Connection) WithBodyLengthLen(length int) *Connection {
 	c.bodyLengthLen = length
 	return c
 }

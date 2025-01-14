@@ -50,7 +50,7 @@ func (c *TcpService) WithMaxLen(maxLen int) *TcpService {
 	return c
 }
 
-func (c *TcpService) WithBodyLenghLen(length int) *TcpService {
+func (c *TcpService) WithBodyLengthLen(length int) *TcpService {
 	c.bodyLengthLen = length
 	return c
 }
@@ -88,7 +88,7 @@ func (t *TcpService) Accept() (*connection.Connection, error) {
 
 	t.connCount++
 	t.curFD++
-	return connection.NewConnection(t.curFD, conn).WithHeaderLenType(t.headerLenType).WithEndian(t.endian).WithMaxLen(t.maxLen).WithBodyLenghLen(t.bodyLengthLen).WithBodyLenOffset(t.bodyLenOffset).WithMaxIdleTime(t.maxIdleTime), nil
+	return connection.NewConnection(t.curFD, conn).WithHeaderLenType(t.headerLenType).WithEndian(t.endian).WithMaxLen(t.maxLen).WithBodyLengthLen(t.bodyLengthLen).WithBodyLenOffset(t.bodyLenOffset).WithMaxIdleTime(t.maxIdleTime), nil
 }
 
 func (t *TcpService) Close() {
