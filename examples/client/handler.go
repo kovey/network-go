@@ -65,9 +65,7 @@ func (h *handler) Shutdown() {
 func main() {
 	tcp := client.NewTcp()
 	tcp.WithBodyLenOffset(0).WithBodyLengthLen(4).WithEndian(binary.BigEndian).WithHeaderLenType(connection.Len_Type_Int32).WithMaxLen(81920)
-	cli := client.NewClient()
-	cli.SetHandler(&handler{})
-	cli.SetService(tcp)
+	cli := client.NewClient().WithHandler(&handler{}).WithService(tcp)
 	if err := cli.Dial("127.0.0.1", 9910); err != nil {
 		panic(err)
 	}
@@ -80,5 +78,5 @@ func main() {
 	var b bytes.Buffer
 	binary.Write(&b, binary.BigEndian, int32(len(buff)))
 	cli.Send(append(b.Bytes(), buff...))
-	cli.Loop()
+	cli.Listen()
 }

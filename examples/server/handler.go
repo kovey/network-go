@@ -44,8 +44,6 @@ func (h *handler) Close(conn *connection.Connection) error {
 func main() {
 	tcp := server.NewTcpService(1024)
 	tcp.WithBodyLenOffset(0).WithBodyLengthLen(4).WithEndian(binary.BigEndian).WithHeaderLenType(connection.Len_Type_Int32).WithMaxLen(81290).WithMaxIdleTime(10 * time.Second)
-	serv := server.NewServer("0.0.0.0", 9910)
-	serv.SetHandler(&handler{})
-	serv.SetService(tcp)
-	serv.Run()
+	serv := server.NewServer("0.0.0.0", 9910).WithHandler(&handler{}).WithService(tcp)
+	serv.ListenAndServ()
 }

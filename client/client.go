@@ -37,12 +37,14 @@ func NewClient() *Client {
 	return &Client{wait: sync.WaitGroup{}, shutdown: make(chan bool, 1), ticker: time.NewTicker(10 * time.Second), isShutdown: false}
 }
 
-func (c *Client) SetService(cli IClient) {
+func (c *Client) WithService(cli IClient) *Client {
 	c.cli = cli
+	return c
 }
 
-func (c *Client) SetHandler(handler IHandler) {
+func (c *Client) WithHandler(handler IHandler) *Client {
 	c.handler = handler
+	return c
 }
 
 func (c *Client) Dial(host string, port int) error {
@@ -64,7 +66,7 @@ func (c *Client) handlerPacket(packet *connection.Packet) {
 	}
 }
 
-func (c *Client) Loop() {
+func (c *Client) Listen() {
 	defer func() {
 		run.Panic(recover())
 	}()

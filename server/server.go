@@ -40,12 +40,12 @@ func NewServer(host string, port int) *Server {
 	return &Server{conns: sync.Map{}, wait: sync.WaitGroup{}, host: host, port: port, isMaintain: false}
 }
 
-func (s *Server) SetService(service IService) *Server {
+func (s *Server) WithService(service IService) *Server {
 	s.service = service
 	return s
 }
 
-func (s *Server) SetHandler(handler IHandler) *Server {
+func (s *Server) WithHandler(handler IHandler) *Server {
 	s.handler = handler
 	return s
 }
@@ -192,7 +192,7 @@ func (s *Server) handlerPacket(data *connection.Packet, conn *connection.Connect
 	}
 }
 
-func (s *Server) Run() {
+func (s *Server) ListenAndServ() {
 	err := s.listenAndServ()
 	if err != nil {
 		panic(err)
