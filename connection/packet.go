@@ -8,3 +8,9 @@ type Packet struct {
 func (p *Packet) Bytes() []byte {
 	return append(p.Header, p.Body...)
 }
+
+func NewPacket(body []byte, header *Header) *Packet {
+	p := &Packet{Body: body}
+	p.Header = header.Header(len(body))
+	return p
+}

@@ -30,8 +30,8 @@ func (t *Tcp) Connection() *connection.Connection {
 	return t.conn
 }
 
-func (t *Tcp) WithHeaderLenType(l connection.HeaderLenType) *Tcp {
-	t.conn.WithHeaderLenType(l)
+func (t *Tcp) WithBodyLenType(l connection.LenType) *Tcp {
+	t.conn.WithBodyLenType(l)
 	return t
 }
 
@@ -45,8 +45,8 @@ func (t *Tcp) WithMaxLen(maxLen int) *Tcp {
 	return t
 }
 
-func (t *Tcp) WithBodyLengthLen(length int) *Tcp {
-	t.conn.WithBodyLengthLen(length)
+func (t *Tcp) WithHeaderLen(length int) *Tcp {
+	t.conn.WithHeaderLen(length)
 	return t
 }
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -28,7 +27,9 @@ func (h *handler) Receive(packet *connection.Packet, cli *client.Client) error {
 		return err
 	}
 
-	debug.Info("data: %+v", dt)
+	for _, d := range dt {
+		debug.Info("data: %+v", d)
+	}
 	cli.Send(append(packet.Header, packet.Body...))
 	return nil
 }
@@ -64,7 +65,7 @@ func (h *handler) Shutdown() {
 
 func main() {
 	tcp := client.NewTcp()
-	tcp.WithBodyLenOffset(0).WithBodyLengthLen(4).WithEndian(binary.BigEndian).WithHeaderLenType(connection.Len_Type_Int32).WithMaxLen(81920)
+	tcp.WithBodyLenOffset(0).WithHeaderLen(4).WithEndian(binary.BigEndian).WithBodyLenType(connection.Len_Type_Int32).WithMaxLen(81920)
 	cli := client.NewClient().WithHandler(&handler{}).WithService(tcp)
 	if err := cli.Dial("127.0.0.1", 9910); err != nil {
 		panic(err)
@@ -75,8 +76,7 @@ func main() {
 		dt = append(dt, data{Id: 1000 + int32(i), Name: fmt.Sprintf("kovey_%d", i), Ok: i%2 == 1, Balance: 1000000})
 	}
 	buff, _ := json.Marshal(dt)
-	var b bytes.Buffer
-	binary.Write(&b, binary.BigEndian, int32(len(buff)))
-	cli.Send(append(b.Bytes(), buff...))
+	p := connection.NewPacket(buff, tcp.Connection().Header())
+	cli.Send(p.Bytes())
 	cli.Listen()
 }

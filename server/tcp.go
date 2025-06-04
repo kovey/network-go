@@ -12,22 +12,19 @@ import (
 )
 
 type TcpService struct {
-	connMax       int
-	connCount     int
-	curFD         uint64
-	listener      net.Listener
-	locker        sync.Mutex
-	isClosed      bool
-	maxLen        int
-	bodyLengthLen int
-	bodyLenOffset int
-	headerLenType connection.HeaderLenType
-	endian        binary.ByteOrder
-	maxIdleTime   time.Duration
+	connMax     int
+	connCount   int
+	curFD       uint64
+	listener    net.Listener
+	locker      sync.Mutex
+	isClosed    bool
+	maxLen      int
+	header      *connection.Header
+	maxIdleTime time.Duration
 }
 
 func NewTcpService(connMax int) *TcpService {
-	return &TcpService{connMax: connMax, locker: sync.Mutex{}}
+	return &TcpService{connMax: connMax, locker: sync.Mutex{}, header: connection.NewHeader()}
 }
 
 func (c *TcpService) WithMaxIdleTime(maxIdleTime time.Duration) *TcpService {
@@ -35,13 +32,13 @@ func (c *TcpService) WithMaxIdleTime(maxIdleTime time.Duration) *TcpService {
 	return c
 }
 
-func (c *TcpService) WithHeaderLenType(t connection.HeaderLenType) *TcpService {
-	c.headerLenType = t
+func (c *TcpService) WithBodyLenType(t connection.LenType) *TcpService {
+	c.header.WithBodyLenType(t)
 	return c
 }
 
 func (c *TcpService) WithEndian(e binary.ByteOrder) *TcpService {
-	c.endian = e
+	c.header.WithEndian(e)
 	return c
 }
 
@@ -50,13 +47,13 @@ func (c *TcpService) WithMaxLen(maxLen int) *TcpService {
 	return c
 }
 
-func (c *TcpService) WithBodyLengthLen(length int) *TcpService {
-	c.bodyLengthLen = length
+func (c *TcpService) WithHeaderLen(length int) *TcpService {
+	c.header.WithHeaderLen(length)
 	return c
 }
 
 func (c *TcpService) WithBodyLenOffset(offset int) *TcpService {
-	c.bodyLenOffset = offset
+	c.header.WithBodyLenOffset(offset)
 	return c
 }
 
@@ -88,7 +85,7 @@ func (t *TcpService) Accept() (*connection.Connection, error) {
 
 	t.connCount++
 	t.curFD++
-	return connection.NewConnection(t.curFD, conn).WithHeaderLenType(t.headerLenType).WithEndian(t.endian).WithMaxLen(t.maxLen).WithBodyLengthLen(t.bodyLengthLen).WithBodyLenOffset(t.bodyLenOffset).WithMaxIdleTime(t.maxIdleTime), nil
+	return connection.NewConnectionBy(t.header, t.curFD, conn).WithMaxLen(t.maxLen).WithMaxIdleTime(t.maxIdleTime), nil
 }
 
 func (t *TcpService) Close() {

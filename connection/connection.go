@@ -9,32 +9,28 @@ import (
 )
 
 var Err_Closed = errors.New("connection is closed")
-var Err_Unkown_Header_Len_Type = errors.New("unkown header length type")
+var Err_Unkown_Body_Len_Type = errors.New("unkown body length type")
 var Err_Packet_Out_Range = errors.New("packet out of range")
 
-type HeaderLenType byte
+type LenType byte
 
 const (
-	Len_Type_Int8   HeaderLenType = 1
-	Len_Type_Int16  HeaderLenType = 2
-	Len_Type_Int32  HeaderLenType = 3
-	Len_Type_Int64  HeaderLenType = 4
-	Len_Type_UInt8  HeaderLenType = 5
-	Len_Type_UInt16 HeaderLenType = 6
-	Len_Type_UInt32 HeaderLenType = 7
-	Len_Type_UInt64 HeaderLenType = 8
+	Len_Type_Int8   LenType = 1
+	Len_Type_Int16  LenType = 2
+	Len_Type_Int32  LenType = 3
+	Len_Type_Int64  LenType = 4
+	Len_Type_UInt8  LenType = 5
+	Len_Type_UInt16 LenType = 6
+	Len_Type_UInt32 LenType = 7
+	Len_Type_UInt64 LenType = 8
 )
 
 type Connection struct {
 	conn           net.Conn
+	header         *Header
 	maxLen         int
-	headerLen      int
-	bodyLengthLen  int
-	bodyLenOffset  int
 	packBuff       []byte
 	readLen        int
-	headerLenType  HeaderLenType
-	endian         binary.ByteOrder
 	fd             uint64
 	isClosed       bool
 	connectTime    int64         // nano seconds
@@ -44,8 +40,16 @@ type Connection struct {
 }
 
 func NewConnection(fd uint64, conn net.Conn) *Connection {
+	return NewConnectionBy(NewHeader(), fd, conn)
+}
+
+func NewConnectionBy(header *Header, fd uint64, conn net.Conn) *Connection {
 	now := time.Now()
-	return &Connection{conn: conn, maxLen: 8192, headerLenType: Len_Type_Int32, headerLen: 4, endian: binary.BigEndian, fd: fd, connectTime: now.UnixNano(), lastActiveTime: now.UnixNano(), packets: make(chan *Packet, 1024)}
+	return &Connection{conn: conn, maxLen: 8192, header: header, fd: fd, connectTime: now.UnixNano(), lastActiveTime: now.UnixNano(), packets: make(chan *Packet, 1024)}
+}
+
+func (c *Connection) Header() *Header {
+	return c.header
 }
 
 func (c *Connection) WithConn(conn net.Conn) *Connection {
@@ -71,26 +75,13 @@ func (c *Connection) WithMaxIdleTime(maxIdleTime time.Duration) *Connection {
 	return c
 }
 
-func (c *Connection) WithHeaderLenType(t HeaderLenType) *Connection {
-	c.headerLenType = t
-	switch t {
-	case Len_Type_Int8, Len_Type_UInt8:
-		c.headerLen = 1
-	case Len_Type_Int16, Len_Type_UInt16:
-		c.headerLen = 2
-	case Len_Type_Int32, Len_Type_UInt32:
-		c.headerLen = 4
-	case Len_Type_Int64, Len_Type_UInt64:
-		c.headerLen = 8
-	default:
-		c.headerLenType = Len_Type_Int32
-	}
-
+func (c *Connection) WithBodyLenType(t LenType) *Connection {
+	c.header.WithBodyLenType(t)
 	return c
 }
 
 func (c *Connection) WithEndian(e binary.ByteOrder) *Connection {
-	c.endian = e
+	c.header.WithEndian(e)
 	return c
 }
 
@@ -100,13 +91,13 @@ func (c *Connection) WithMaxLen(maxLen int) *Connection {
 	return c
 }
 
-func (c *Connection) WithBodyLengthLen(length int) *Connection {
-	c.bodyLengthLen = length
+func (c *Connection) WithHeaderLen(length int) *Connection {
+	c.header.WithHeaderLen(length)
 	return c
 }
 
 func (c *Connection) WithBodyLenOffset(offset int) *Connection {
-	c.bodyLenOffset = offset
+	c.header.WithBodyLenOffset(offset)
 	return c
 }
 
@@ -142,15 +133,15 @@ func (c *Connection) Read() (*Packet, error) {
 	var err error
 	for {
 		if bodyLen == 0 {
-			if c.readLen >= c.headerLen {
-				bodyLen, err = c.bodyLen(c.packBuff[c.bodyLenOffset : c.bodyLenOffset+c.headerLen])
+			if c.readLen >= c.header.headerLen {
+				bodyLen, err = c.bodyLen(c.packBuff[c.header.bodyLenOffset : c.header.bodyLenOffset+c.header.bodyLengthLen])
 				if err != nil {
 					return nil, err
 				}
 			}
 		}
 
-		if c.readLen >= c.headerLen+bodyLen {
+		if c.readLen >= c.header.headerLen+bodyLen {
 			return c.copyBuff(bodyLen), nil
 		}
 
@@ -168,10 +159,10 @@ func (c *Connection) Read() (*Packet, error) {
 }
 
 func (c *Connection) copyBuff(bodyLen int) *Packet {
-	buffLen := c.headerLen + bodyLen
-	p := &Packet{Body: make([]byte, bodyLen), Header: make([]byte, c.headerLen)}
-	copy(p.Header, c.packBuff[:c.headerLen])
-	copy(p.Body, c.packBuff[c.headerLen:])
+	buffLen := c.header.headerLen + bodyLen
+	p := &Packet{Body: make([]byte, bodyLen), Header: make([]byte, c.header.headerLen)}
+	copy(p.Header, c.packBuff[:c.header.headerLen])
+	copy(p.Body, c.packBuff[c.header.headerLen:])
 	copy(c.packBuff, c.packBuff[buffLen:c.readLen])
 	c.readLen -= buffLen
 
@@ -181,42 +172,42 @@ func (c *Connection) copyBuff(bodyLen int) *Packet {
 
 func (c *Connection) bodyLen(data []byte) (int, error) {
 	buffer := bytes.NewBuffer(data)
-	switch c.headerLenType {
+	switch c.header.bodyLenType {
 	case Len_Type_Int8:
 		var l int8
-		err := binary.Read(buffer, c.endian, &l)
+		err := binary.Read(buffer, c.header.endian, &l)
 		return int(l), err
 	case Len_Type_Int16:
 		var l int16
-		err := binary.Read(buffer, c.endian, &l)
+		err := binary.Read(buffer, c.header.endian, &l)
 		return int(l), err
 	case Len_Type_Int32:
 		var l int32
-		err := binary.Read(buffer, c.endian, &l)
+		err := binary.Read(buffer, c.header.endian, &l)
 		return int(l), err
 	case Len_Type_Int64:
 		var l int64
-		err := binary.Read(buffer, c.endian, &l)
+		err := binary.Read(buffer, c.header.endian, &l)
 		return int(l), err
 	case Len_Type_UInt8:
 		var l uint8
-		err := binary.Read(buffer, c.endian, &l)
+		err := binary.Read(buffer, c.header.endian, &l)
 		return int(l), err
 	case Len_Type_UInt16:
 		var l uint16
-		err := binary.Read(buffer, c.endian, &l)
+		err := binary.Read(buffer, c.header.endian, &l)
 		return int(l), err
 	case Len_Type_UInt32:
 		var l uint32
-		err := binary.Read(buffer, c.endian, &l)
+		err := binary.Read(buffer, c.header.endian, &l)
 		return int(l), err
 	case Len_Type_UInt64:
 		var l uint64
-		err := binary.Read(buffer, c.endian, &l)
+		err := binary.Read(buffer, c.header.endian, &l)
 		return int(l), err
 	}
 
-	return 0, Err_Unkown_Header_Len_Type
+	return 0, Err_Unkown_Body_Len_Type
 }
 
 func (c *Connection) Close() error {
