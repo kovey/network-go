@@ -1,4 +1,4 @@
-github.com/kovey/debug-go v0.0.5 h1:c81KNW/mganMHZOAj9n8FY1e9Zz203GwPNJCnpfsVRQ=
-github.com/kovey/debug-go v0.0.5/go.mod h1:J88EXuunCnkLg62OEafQHDzkD2hq8r3Vi2Lkv+KHd9U=
-github.com/kovey/pool v0.0.7 h1:ucHJj5tC9ERlUfzOTlupP1B4ggSL9ST6wdNnr3brUXA=
-github.com/kovey/pool v0.0.7/go.mod h1:Pf7Dtjwz3DhhIx94ZKMr+j6KKdDf+Ewd5EcAHq2VGTo=
+github.com/kovey/debug-go v0.1.2 h1:YhHEql96SvoSs/IFSQDHXqxiVa0UV2iyUQBm+XPFHtU=
+github.com/kovey/debug-go v0.1.2/go.mod h1:J88EXuunCnkLg62OEafQHDzkD2hq8r3Vi2Lkv+KHd9U=
+github.com/kovey/pool v0.0.9 h1:iZ+MslndcV/h1a+z0jiOmZXuQ999M6UW+5HMMRm9isc=
+github.com/kovey/pool v0.0.9/go.mod h1:Pf7Dtjwz3DhhIx94ZKMr+j6KKdDf+Ewd5EcAHq2VGTo=
